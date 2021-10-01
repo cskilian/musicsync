@@ -8,7 +8,7 @@ const CLIENT_DIR = path.join(__dirname, 'client');
 app.use(express.static(CLIENT_DIR));
 
 app.get('/', (req, res) => {
-	res.sendFile('main.html', { root: CLIENT_DIR});
+	res.sendFile('client.html', { root: CLIENT_DIR});
 });
 
 app.listen(port, () => {

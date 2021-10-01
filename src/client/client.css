@@ -1,0 +1,30 @@
+.file-box {
+  position: relative;
+}
+
+.file-input {
+  display: none;
+}
+
+.container {
+  display: inline-block;
+  width: 100%;
+}
+
+.file-frame {
+  display: inline-block;
+  width: 100%;
+  border: 1px solid;
+  padding: 5px 0px 5px 5px;
+  box-sizing: border-box;
+  height: calc(2rem - 2px);
+}
+
+.file-button {
+  background: red;
+  padding: 5px;
+  position: absolute;
+  border: 1px solid;
+  top: 0px;
+  right: 0px;
+}
