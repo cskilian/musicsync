@@ -37,12 +37,13 @@
 				</span>
 			</label>
 		</div>
-		<div class="audio-box">
-			<audio id="audio-player"></audio>
-			<button id="auto-sync-button" onclick="">Auto Sync</button>
-			<button id="manual-sync-button" onclick="">Manual Sync</button>
-			<button id="play-pause-button" onclick="playPauseAudio(this)">Play</button>
-			<button id="stop-button" onclick="stopAudio(this)">Stop</button>
+		<div id="audio-box">
+			<audio id="audio-player" onended="resetAudio()"></audio>
+			<button class="audio-button" id="auto-sync-button" onclick="">Auto Sync</button>
+			<button class="audio-button" id="manual-sync-button" onclick="">Manual Sync</button>
+			<button class="audio-button" id="play-pause-button" onclick="playPauseAudio(this)">Play</button>
+			<div id="time-line" onclick="seekOnTimeline(event)"><div id="seeker"></div></div>
+			<button class="audio-button" id="stop-button" onclick="stopAudio(this)">Stop</button>
 		</div>
 	</body>
 </html>

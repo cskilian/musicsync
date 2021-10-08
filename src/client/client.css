@@ -28,3 +28,32 @@
   top: 0px;
   right: 0px;
 }
+
+#audio-box {
+  display: flex;
+}
+
+.audio-button {
+  height: 20px;
+  margin-top: 20px;
+  float: left;
+  border-radius: 15px;
+}
+
+#time-line {
+  float: left;
+  flex: 1;
+  height: 20px;
+  background: grey;
+  margin-top: 20px;
+  align-items: stretch;
+  border-radius: 15px;
+}
+
+#seeker {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  margin-top: 1px;
+  background: grey;
+}
