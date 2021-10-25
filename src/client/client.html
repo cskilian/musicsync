@@ -8,7 +8,7 @@
 	<body>
 		<div class="file-box">
 			<script src="client.js"></script>
-			<input type="file" class="file-input" id="audio" name="audio" accept=".mp3, .wav, audio/mpeg" onchange="selectAudioFile(this, 'audio-name')">
+			<input type="file" class="file-input" id="audio" name="audio" accept=".mp3, .wav, audio/mpeg" onchange="selectAudioFile(this)">
 			<label for="audio">
 				<span id="audio-name" class="file-frame">Audio:</span>
 				<span class="file-button">
@@ -18,7 +18,7 @@
 			</label>
 		</div>
 		<div class="file-box">
-			<input type="file" class="file-input" id="score" name="score" accept=".musicxml, .mxl, application/vnd.recordare.musicxml+xml, application/vnd.recordare.musicxml" onchange="selectFile(this, 'score-name')">
+			<input type="file" class="file-input" id="score" name="score" accept=".musicxml, .mxl, application/vnd.recordare.musicxml+xml, application/vnd.recordare.musicxml" onchange="selectScoreFile(this)">
 			<label for="score">
 				<span id="score-name" class="file-frame">Sheetmusic:</span>
 				<span class="file-button">
@@ -28,7 +28,7 @@
 			</label>
 		</div>
 		<div class="file-box">
-			<input type="file" class="file-input" id="sync" name="sync" accept=".json, application/json" onchange="selectFile(this, 'sync-name')">
+			<input type="file" class="file-input" id="sync" name="sync" accept=".json, application/json" onchange="selectSyncFile(this)">
 			<label for="sync">
 				<span id="sync-name" class="file-frame">Synchronization:</span>
 				<span class="file-button">
@@ -41,9 +41,9 @@
 			<audio id="audio-player" onended="resetAudio()"></audio>
 			<button class="audio-button" id="auto-sync-button" onclick="">Auto Sync</button>
 			<button class="audio-button" id="manual-sync-button" onclick="">Manual Sync</button>
-			<button class="audio-button" id="play-pause-button" onclick="playPauseAudio(this)">Play</button>
+			<button class="audio-button" id="play-pause-button" onclick="playPauseAudio()">Play</button>
 			<div id="time-line" onclick="seekOnTimeline(event)"><div id="seeker"></div></div>
-			<button class="audio-button" id="stop-button" onclick="stopAudio(this)">Stop</button>
+			<button class="audio-button" id="stop-button" onclick="stopAudio()">Stop</button>
 		</div>
 	</body>
 </html>
