@@ -9,6 +9,9 @@ const TIMELINE = "time-line";
 const SHEET_MUSIC_CONTAINER = "osmd-container";
 const LOADING_SIGN = "loading-sign";
 
+//VexFlow constants
+const UNIT_IN_PIXELS = 10;
+
 //Globals
 var osmd = undefined;
 
@@ -23,6 +26,7 @@ function initOSMD()
 		backend: "svg",
 		drawTitle: true,
 		measureNumberInterval: 1,
+		cursorOptions: [{type: 3}],
     	// drawingParameters: "compacttight" // don't display title, composer etc., smaller margins
 	});
 }
@@ -31,7 +35,11 @@ function changeScore(file)
 {
 	var fileReader = new FileReader();
 	fileReader.onload = (event) => {
-		osmd.load(event.target.result).then(() => { osmd.render(); endLoadingSign(); })
+		osmd.load(event.target.result).then(() => { 
+			osmd.render();
+			createClickBoundingBoxes();
+			endLoadingSign();
+		});
 	};
 	if (file.name.toLowerCase().endsWith(".xml") || file.name.toLowerCase().endsWith(".musicxml"))
 	{
@@ -44,6 +52,30 @@ function changeScore(file)
 	else
 	{
 		window.alert("Invalid or corrupt musicxml file");
+	}
+}
+
+function createClickBoundingBoxes()
+{
+	const svgCanvas = document.getElementsByTagName("svg")[0];
+	for (let bar = 0; bar < osmd.GraphicSheet.measureList.length; ++bar)
+	{
+		for (let i = 0; i < osmd.GraphicSheet.measureList[bar].length; ++i)
+		{
+			let measure = osmd.GraphicSheet.measureList[bar][i];
+			let x = measure.boundingBox.absolutePosition.x * UNIT_IN_PIXELS;
+			let y = measure.boundingBox.absolutePosition.y * UNIT_IN_PIXELS;
+			let width = measure.boundingBox.boundingRectangle.width * UNIT_IN_PIXELS;
+			let height = measure.boundingBox.boundingRectangle.height * UNIT_IN_PIXELS;
+			var boundingBox = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+			boundingBox.setAttribute("x", x);
+			boundingBox.setAttribute("y", y);
+			boundingBox.setAttribute("width", width);
+			boundingBox.setAttribute("height", height);
+			boundingBox.setAttribute("style", "pointer-events: bounding-box; fill: none;");
+			boundingBox.setAttribute("onclick", `window.alert("${bar + 1}")`);
+			svgCanvas.appendChild(boundingBox);
+		}
 	}
 }
 
@@ -268,3 +300,8 @@ function initAll(event)
 }
 
 window.addEventListener("DOMContentLoaded", initAll);
+
+function measureClick(measure)
+{
+	console.log("Clicked on measure " + measure);
+}
