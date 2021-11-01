@@ -22,6 +22,7 @@ function initOSMD()
 	osmd.setOptions({
 		backend: "svg",
 		drawTitle: true,
+		measureNumberInterval: 1,
     	// drawingParameters: "compacttight" // don't display title, composer etc., smaller margins
 	});
 }
