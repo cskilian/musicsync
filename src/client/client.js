@@ -6,6 +6,8 @@ const AUDIO_PLAYER_ID = "audio-player";
 const PLAY_PAUSE_BUTTON = "play-pause-button";
 const TIMELINE_SEEKER = "seeker";
 const TIMELINE = "time-line";
+const SHEET_MUSIC_CONTAINER = "osmd-container";
+const LOADING_SIGN = "loading-sign";
 
 //Globals
 var osmd = undefined;
@@ -14,9 +16,9 @@ var osmd = undefined;
  * Controllers
  * ====================================================================================
  */
-function initOsmd()
+function initOSMD()
 {
-	osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay("osmd-container");
+	osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay(SHEET_MUSIC_CONTAINER);
 	osmd.setOptions({
 		backend: "svg",
 		drawTitle: true,
@@ -28,7 +30,7 @@ function changeScore(file)
 {
 	var fileReader = new FileReader();
 	fileReader.onload = (event) => {
-		osmd.load(event.target.result).then(() => { osmd.render(); })
+		osmd.load(event.target.result).then(() => { osmd.render(); endLoadingSign(); })
 	};
 	if (file.name.toLowerCase().endsWith(".xml") || file.name.toLowerCase().endsWith(".musicxml"))
 	{
@@ -170,6 +172,27 @@ function moveSeeker(event)
  		seeker.style.maginLeft = timelineWidth + "px";
  	}
 }
+
+//displays loading sign while xml is rendered
+function startLoadingSign()
+{
+	const sheetMusicContainer = document.getElementById(SHEET_MUSIC_CONTAINER);
+	if (document.getElementById(LOADING_SIGN) == null)
+	{
+		sheetMusicContainer.innerHTML = `<span id='${LOADING_SIGN}' style='font-size: xx-large;'>Loading ...</span>`;
+	}
+}
+
+//removes loading sign
+function endLoadingSign()
+{
+	const sheetMusicContainer = document.getElementById(SHEET_MUSIC_CONTAINER);
+	const loadingSign = document.getElementById(LOADING_SIGN);
+	if (loadingSign !== null)
+	{
+		sheetMusicContainer.removeChild(loadingSign);
+	}
+}
 /* =======================================================================================
  * Event Handlers
  * =======================================================================================
@@ -185,6 +208,7 @@ function selectSyncFile(input)
 function selectScoreFile(input) 
 {
 	const fileName = input.files[0].name;
+	startLoadingSign();
 	changeScore(input.files[0]);
 	updateLabel(SCORE_FILE_NAME, fileName);
 }
@@ -239,7 +263,7 @@ function seekOnTimeline(event)
  */
 function initAll(event)
 {
-	initOsmd();
+	initOSMD();
 }
 
 window.addEventListener("DOMContentLoaded", initAll);
