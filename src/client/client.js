@@ -7,11 +7,43 @@ const PLAY_PAUSE_BUTTON = "play-pause-button";
 const TIMELINE_SEEKER = "seeker";
 const TIMELINE = "time-line";
 
+//Globals
+var osmd = undefined;
 
 /* ====================================================================================
  * Controllers
  * ====================================================================================
  */
+function initOsmd()
+{
+	osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay("osmd-container");
+	osmd.setOptions({
+		backend: "svg",
+		drawTitle: true,
+    	// drawingParameters: "compacttight" // don't display title, composer etc., smaller margins
+	});
+}
+
+function changeScore(file)
+{
+	var fileReader = new FileReader();
+	fileReader.onload = (event) => {
+		osmd.load(event.target.result).then(() => { osmd.render(); })
+	};
+	if (file.name.toLowerCase().endsWith(".xml") || file.name.toLowerCase().endsWith(".musicxml"))
+	{
+		fileReader.readAsText(file);
+	}
+	else if (file.name.toLowerCase().endsWith(".mxl"))
+	{
+		fileReader.readAsBinaryString(file);
+	}
+	else
+	{
+		window.alert("Invalid or corrupt musicxml file");
+	}
+}
+
 function stopAudioControl()
 {
 	const audioPlayer = document.getElementById(AUDIO_PLAYER_ID);
@@ -153,6 +185,7 @@ function selectSyncFile(input)
 function selectScoreFile(input) 
 {
 	const fileName = input.files[0].name;
+	changeScore(input.files[0]);
 	updateLabel(SCORE_FILE_NAME, fileName);
 }
 
@@ -201,6 +234,12 @@ function seekOnTimeline(event)
 	moveSeeker(event);
 }
 
- function initAll()
- {
- }
+/*
+ * Page load initialisation
+ */
+function initAll(event)
+{
+	initOsmd();
+}
+
+window.addEventListener("DOMContentLoaded", initAll);

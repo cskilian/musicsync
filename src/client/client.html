@@ -6,8 +6,9 @@
 		<link rel="stylesheet" type="text/css" href="client.css">
 	</head>
 	<body>
+		<script src="opensheetmusicdisplay.min.js" defer></script>
+		<script src="client.js" defer></script>
 		<div class="file-box">
-			<script src="client.js"></script>
 			<input type="file" class="file-input" id="audio" name="audio" accept=".mp3, .wav, audio/mpeg" onchange="selectAudioFile(this)">
 			<label for="audio">
 				<span id="audio-name" class="file-frame">Audio:</span>
@@ -18,7 +19,7 @@
 			</label>
 		</div>
 		<div class="file-box">
-			<input type="file" class="file-input" id="score" name="score" accept=".musicxml, .mxl, application/vnd.recordare.musicxml+xml, application/vnd.recordare.musicxml" onchange="selectScoreFile(this)">
+			<input type="file" class="file-input" id="score" name="score" accept=".musicxml, .mxl, application/vnd.recordare.musicxml+xml, application/vnd.recordare.musicxml, .xml" onchange="selectScoreFile(this)">
 			<label for="score">
 				<span id="score-name" class="file-frame">Sheetmusic:</span>
 				<span class="file-button">
@@ -45,5 +46,6 @@
 			<div id="time-line" onclick="seekOnTimeline(event)"><div id="seeker"></div></div>
 			<button class="audio-button" id="stop-button" onclick="stopAudio()">Stop</button>
 		</div>
+		<div id="osmd-container"></div>
 	</body>
 </html>
