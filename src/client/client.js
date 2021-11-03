@@ -299,10 +299,8 @@ function pageResize(event)
 {
 	if (osmd !== undefined)
 	{
-		startLoadingSign();
 		osmd.render();
 		createClickBoundingBoxes();
-		endLoadingSign();
 	}
 }
 
