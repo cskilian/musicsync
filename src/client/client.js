@@ -23,6 +23,7 @@ function initOSMD()
 {
 	osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay(SHEET_MUSIC_CONTAINER);
 	osmd.setOptions({
+		autoResize: false,
 		backend: "svg",
 		drawTitle: true,
 		measureNumberInterval: 1,
@@ -52,30 +53,6 @@ function changeScore(file)
 	else
 	{
 		window.alert("Invalid or corrupt musicxml file");
-	}
-}
-
-function createClickBoundingBoxes()
-{
-	const svgCanvas = document.getElementsByTagName("svg")[0];
-	for (let bar = 0; bar < osmd.GraphicSheet.measureList.length; ++bar)
-	{
-		for (let i = 0; i < osmd.GraphicSheet.measureList[bar].length; ++i)
-		{
-			let measure = osmd.GraphicSheet.measureList[bar][i];
-			let x = measure.boundingBox.absolutePosition.x * UNIT_IN_PIXELS;
-			let y = measure.boundingBox.absolutePosition.y * UNIT_IN_PIXELS;
-			let width = measure.boundingBox.boundingRectangle.width * UNIT_IN_PIXELS;
-			let height = measure.boundingBox.boundingRectangle.height * UNIT_IN_PIXELS;
-			var boundingBox = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-			boundingBox.setAttribute("x", x);
-			boundingBox.setAttribute("y", y);
-			boundingBox.setAttribute("width", width);
-			boundingBox.setAttribute("height", height);
-			boundingBox.setAttribute("style", "pointer-events: bounding-box; fill: none;");
-			boundingBox.setAttribute("onclick", `window.alert("${bar + 1}")`);
-			svgCanvas.appendChild(boundingBox);
-		}
 	}
 }
 
@@ -212,7 +189,13 @@ function startLoadingSign()
 	const sheetMusicContainer = document.getElementById(SHEET_MUSIC_CONTAINER);
 	if (document.getElementById(LOADING_SIGN) == null)
 	{
-		sheetMusicContainer.innerHTML = `<span id='${LOADING_SIGN}' style='font-size: xx-large;'>Loading ...</span>`;
+		const loadingSignElement = document.createElement("span");
+		const loadingSignText = document.createTextNode("Loading ...");
+		loadingSignElement.setAttribute("id", LOADING_SIGN);
+		loadingSignElement.setAttribute("style", "font-size: xx-large;");
+		loadingSignElement.appendChild(loadingSignText);
+		sheetMusicContainer.prepend(loadingSignElement);
+		//sheetMusicContainer.innerHTML = `<span id='${LOADING_SIGN}' style='font-size: xx-large;'>Loading ...</span>`;
 	}
 }
 
@@ -226,6 +209,31 @@ function endLoadingSign()
 		sheetMusicContainer.removeChild(loadingSign);
 	}
 }
+
+function createClickBoundingBoxes()
+{
+	const svgCanvas = document.getElementsByTagName("svg")[0];
+	for (let bar = 0; bar < osmd.GraphicSheet.measureList.length; ++bar)
+	{
+		for (let i = 0; i < osmd.GraphicSheet.measureList[bar].length; ++i)
+		{
+			let measure = osmd.GraphicSheet.measureList[bar][i];
+			let x = measure.boundingBox.absolutePosition.x * UNIT_IN_PIXELS;
+			let y = measure.boundingBox.absolutePosition.y * UNIT_IN_PIXELS;
+			let width = measure.boundingBox.boundingRectangle.width * UNIT_IN_PIXELS;
+			let height = measure.boundingBox.boundingRectangle.height * UNIT_IN_PIXELS;
+			var boundingBox = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+			boundingBox.setAttribute("x", x);
+			boundingBox.setAttribute("y", y);
+			boundingBox.setAttribute("width", width);
+			boundingBox.setAttribute("height", height);
+			boundingBox.setAttribute("style", "pointer-events: bounding-box; fill: none;");
+			boundingBox.setAttribute("onclick", `window.alert("${bar + 1}")`);
+			svgCanvas.appendChild(boundingBox);
+		}
+	}
+}
+
 /* =======================================================================================
  * Event Handlers
  * =======================================================================================
@@ -299,9 +307,16 @@ function initAll(event)
 	initOSMD();
 }
 
-window.addEventListener("DOMContentLoaded", initAll);
-
-function measureClick(measure)
+function pageResize(event)
 {
-	console.log("Clicked on measure " + measure);
+	if (osmd !== undefined)
+	{
+		startLoadingSign();
+		osmd.render();
+		createClickBoundingBoxes();
+		endLoadingSign();
+	}
 }
+
+window.addEventListener("DOMContentLoaded", initAll);
+window.addEventListener("resize", pageResize);
