@@ -186,28 +186,16 @@ function moveSeeker(event)
 //displays loading sign while xml is rendered
 function startLoadingSign()
 {
-	const sheetMusicContainer = document.getElementById(SHEET_MUSIC_CONTAINER);
-	if (document.getElementById(LOADING_SIGN) == null)
-	{
-		const loadingSignElement = document.createElement("span");
-		const loadingSignText = document.createTextNode("Loading ...");
-		loadingSignElement.setAttribute("id", LOADING_SIGN);
-		loadingSignElement.setAttribute("style", "font-size: xx-large;");
-		loadingSignElement.appendChild(loadingSignText);
-		sheetMusicContainer.prepend(loadingSignElement);
-		//sheetMusicContainer.innerHTML = `<span id='${LOADING_SIGN}' style='font-size: xx-large;'>Loading ...</span>`;
-	}
+	const loadingSign = document.getElementById(LOADING_SIGN);
+	loadingSign.setAttribute("style", "display: visible;");
+
 }
 
 //removes loading sign
 function endLoadingSign()
 {
-	const sheetMusicContainer = document.getElementById(SHEET_MUSIC_CONTAINER);
 	const loadingSign = document.getElementById(LOADING_SIGN);
-	if (loadingSign !== null)
-	{
-		sheetMusicContainer.removeChild(loadingSign);
-	}
+	loadingSign.setAttribute("style", "display: none;");
 }
 
 function createClickBoundingBoxes()
@@ -227,7 +215,7 @@ function createClickBoundingBoxes()
 			boundingBox.setAttribute("y", y);
 			boundingBox.setAttribute("width", width);
 			boundingBox.setAttribute("height", height);
-			boundingBox.setAttribute("style", "pointer-events: bounding-box; fill: none;");
+			boundingBox.setAttribute("style", "pointer-events: bounding-box; opacity: 0;");
 			boundingBox.setAttribute("onclick", `window.alert("${bar + 1}")`);
 			svgCanvas.appendChild(boundingBox);
 		}
