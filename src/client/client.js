@@ -4,6 +4,7 @@ const SCORE_FILE_NAME = "score-name";
 const SYNC_FILE_NAME = "sync-name";
 const AUDIO_PLAYER_ID = "audio-player";
 const PLAY_PAUSE_BUTTON = "play-pause-button";
+const MANUAL_SYNC_BUTTON = "manual-sync-button";
 const TIMELINE_SEEKER = "seeker";
 const TIMELINE = "time-line";
 const SHEET_MUSIC_CONTAINER = "osmd-container";
@@ -12,7 +13,7 @@ const LOADING_SIGN = "loading-sign";
 //VexFlow constants
 const UNIT_IN_PIXELS = 10;
 
-//Globals
+//Application specific globals
 var MusicSync = {
 	osmd: undefined,
 	isRecording: false,
@@ -65,6 +66,25 @@ function stopAudioControl()
 	const audioPlayer = document.getElementById(AUDIO_PLAYER_ID);
 	audioPlayer.pause();
 	audioPlayer.currentTime = 0;
+}
+
+function manualSyncControl()
+{
+	const audioPlayer = document.getElementById(AUDIO_PLAYER_ID);
+	MusicSync.isRecording = !MusicSync.isRecording;
+	if (MusicSync.isRecording && audioPlayer.paused)
+	{
+		audioPlayer.play();
+	}
+	else if (!MusicSync.isRecording)
+	{
+		audioPlayer.pause();
+	}
+}
+
+function stopManualSync()
+{
+	MusicSync.isRecording = false;
 }
 
 function changeAudioPlayerSource(file)
@@ -175,6 +195,19 @@ function updatePlayPauseButton()
 
 }
 
+function updateManualSyncButton()
+{
+	const button = document.getElementById(MANUAL_SYNC_BUTTON);
+	if (MusicSync.isRecording)
+	{
+		button.style.color = "red";
+	}
+	else
+	{
+		button.style.color = null;
+	}
+}
+
 function moveSeeker(event)
 {
  	const audioPlayer = document.getElementById(AUDIO_PLAYER_ID);
@@ -269,6 +302,12 @@ function selectAudioFile(input)
 
 function playPauseAudio()
 {
+	const audioPlayer = document.getElementById(AUDIO_PLAYER_ID);
+	if (audioPlayer.src == "")
+	{
+		error("You need to load an audio file before playing", true);
+		return;
+	}
 	playPauseAudioControl();
 	updatePlayPauseButton();
 }
@@ -276,16 +315,31 @@ function playPauseAudio()
 function stopAudio()
 {
 	stopAudioControl();
+	stopManualSync();
 	updatePlayPauseButton();
+	updateManualSyncButton();
 }
 
 function resetAudio()
 {
 	stopAudioControl();
+	stopManualSync();
 	updatePlayPauseButton();
+	updateManualSyncButton();
 }
 
-
+function manualSync()
+{
+	const audioPlayer = document.getElementById(AUDIO_PLAYER_ID);
+	if (audioPlayer.src == "")
+	{
+		error("You need to load an audio file and MusicXML score before synchronising", true);
+		return;
+	}
+	manualSyncControl();
+	updateManualSyncButton();
+	updatePlayPauseButton();
+}
 /* 
  * Event handler for clicking on the timeline
  */
