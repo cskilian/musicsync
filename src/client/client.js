@@ -13,7 +13,11 @@ const LOADING_SIGN = "loading-sign";
 const UNIT_IN_PIXELS = 10;
 
 //Globals
-var osmd = undefined;
+var MusicSync = {
+	osmd: undefined,
+	isRecording: false,
+	timepoints: [],
+};
 
 /* ====================================================================================
  * Controllers
@@ -21,8 +25,8 @@ var osmd = undefined;
  */
 function initOSMD()
 {
-	osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay(SHEET_MUSIC_CONTAINER);
-	osmd.setOptions({
+	MusicSync.osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay(SHEET_MUSIC_CONTAINER);
+	MusicSync.osmd.setOptions({
 		autoResize: false,
 		backend: "svg",
 		drawTitle: true,
@@ -36,8 +40,8 @@ function changeScore(file)
 {
 	var fileReader = new FileReader();
 	fileReader.onload = (event) => {
-		osmd.load(event.target.result).then(() => { 
-			osmd.render();
+		MusicSync.osmd.load(event.target.result).then(() => { 
+			MusicSync.osmd.render();
 			createClickBoundingBoxes();
 			endLoadingSign();
 		});
@@ -52,7 +56,7 @@ function changeScore(file)
 	}
 	else
 	{
-		window.alert("Invalid or corrupt musicxml file");
+		error("Invalid or corrupt musicxml file", true);
 	}
 }
 
@@ -109,6 +113,15 @@ function changeAudioPlayerPosition(event)
  * User Interface 
  * =====================================================================================
  */
+function error(errorMessage, alert)
+{
+	if (alert)
+	{
+		window.alert(errorMessage);
+	}
+	console.log(errorMessage);
+}
+
 function updateLabel(labelId, fileName)
 {
 	document.getElementById(labelId).innerHTML = fileName;
@@ -201,11 +214,11 @@ function endLoadingSign()
 function createClickBoundingBoxes()
 {
 	const svgCanvas = document.getElementsByTagName("svg")[0];
-	for (let bar = 0; bar < osmd.GraphicSheet.measureList.length; ++bar)
+	for (let bar = 0; bar < MusicSync.osmd.GraphicSheet.measureList.length; ++bar)
 	{
-		for (let i = 0; i < osmd.GraphicSheet.measureList[bar].length; ++i)
+		for (let i = 0; i < MusicSync.osmd.GraphicSheet.measureList[bar].length; ++i)
 		{
-			let measure = osmd.GraphicSheet.measureList[bar][i];
+			let measure = MusicSync.osmd.GraphicSheet.measureList[bar][i];
 			let x = measure.boundingBox.absolutePosition.x * UNIT_IN_PIXELS;
 			let y = measure.boundingBox.absolutePosition.y * UNIT_IN_PIXELS;
 			let width = measure.boundingBox.boundingRectangle.width * UNIT_IN_PIXELS;
@@ -297,9 +310,9 @@ function initAll(event)
 
 function pageResize(event)
 {
-	if (osmd !== undefined)
+	if (MusicSync.osmd !== undefined)
 	{
-		osmd.render();
+		MusicSync.osmd.render();
 		createClickBoundingBoxes();
 	}
 }
