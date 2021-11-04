@@ -210,6 +210,14 @@ function changeAudioPlayerPosition(event)
   	audioPlayer.currentTime = audioPlayer.duration * (event.clientX - timeline.getBoundingClientRect().left) / timelineWidth;
 }
 
+function measuresToJSON()
+{
+	var jsonString = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(MusicSync.measures, null, 2));
+	var fileName = document.getElementById(SCORE_FILE_NAME).innerText + ".json";
+	return [jsonString, fileName];
+}
+
+
 /* =====================================================================================
  * User Interface 
  * =====================================================================================
@@ -349,6 +357,16 @@ function createClickBoundingBoxes()
 	}
 }
 
+function makeAndClickDownloadAnchor(saved)
+{
+	var downloadAnchor = document.createElement("a");
+	downloadAnchor.setAttribute("href", saved[0]);
+	downloadAnchor.setAttribute("download", saved[1]);
+	document.body.appendChild(downloadAnchor);
+	downloadAnchor.click();
+	downloadAnchor.remove();
+}
+
 /* =======================================================================================
  * Event Handlers
  * =======================================================================================
@@ -485,6 +503,17 @@ function measureClick(measure)
 		return;
 	}
 	measureClickControl(measure);
+}
+
+function save()
+{
+	if (MusicSync.measures.length <= 0)
+	{
+		error("You need to load a score and sync before downloading", true);
+		return;
+	}
+	let saved = measuresToJSON();
+	makeAndClickDownloadAnchor(saved);
 }
 
 
