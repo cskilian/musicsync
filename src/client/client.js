@@ -89,6 +89,32 @@ function initMeasures()
 		}
 		MusicSync.measures.push(musicSyncMeasure);
 	}
+	MusicSync.measures[0].timepoint.push(0);	//assign audio beginning to 1st measure just in case
+}
+
+function measureClickControl(measureIndex)
+{
+	const audioPlayer = document.getElementById(AUDIO_PLAYER_ID);
+	const measure = MusicSync.measures[measureIndex];
+	const repeating = (REPEAT.on <= measure.repeat && measure.repeat <= REPEAT.end); 
+	if (MusicSync.isRecording)
+	{
+		if (repeating)
+		{
+			measure.timepoint.push(audioPlayer.currentTime);
+		}
+		else
+		{
+			measure.timepoint.length == 0 ? measure.timepoint.push(audioPlayer.currentTime) : measure.timepoint[0] = audioPlayer.currentTime;
+		}
+	}
+	else
+	{
+		if (0 < measure.timepoint.length)
+		{
+			audioPlayer.currentTime = measure.timepoint[measure.timepoint.length - 1];
+		}
+	}
 }
 
 function changeScore(file)
@@ -317,7 +343,7 @@ function createClickBoundingBoxes()
 			boundingBox.setAttribute("width", width);
 			boundingBox.setAttribute("height", height);
 			boundingBox.setAttribute("style", "pointer-events: bounding-box; opacity: 0;");
-			boundingBox.setAttribute("onclick", `window.alert("${bar + 1}")`);
+			boundingBox.setAttribute("onclick", `measureClick(${bar})`);
 			svgCanvas.appendChild(boundingBox);
 		}
 	}
@@ -410,6 +436,20 @@ function seekOnTimeline(event)
 }
 
 /*
+ * Event handler for clicking on a bar
+ */
+function measureClick(measure)
+{
+	if (MusicSync.measures.length <= measure)
+	{
+		error("Clicked on a bounding box for a non-existent measure", false);
+		return;
+	}
+	measureClickControl(measure);
+}
+
+
+/*
  * Page load initialisation
  */
 function initAll(event)
@@ -419,7 +459,7 @@ function initAll(event)
 
 function pageResize(event)
 {
-	if (MusicSync.osmd !== undefined)
+	if (MusicSync.osmd !== undefined && MusicSync.osmd.Sheet !== undefined)
 	{
 		MusicSync.osmd.render();
 		createClickBoundingBoxes();
