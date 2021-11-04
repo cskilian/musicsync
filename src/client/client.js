@@ -1,3 +1,7 @@
+/* ====================================================================================
+ * Constants
+ * ====================================================================================
+ */
 //Element identifiers
 const AUDIO_FILE_NAME = "audio-name";
 const SCORE_FILE_NAME = "score-name";
@@ -14,10 +18,25 @@ const LOADING_SIGN = "loading-sign";
 const UNIT_IN_PIXELS = 10;
 
 //Application specific globals
+const REPEAT = {
+	off: 0,
+	on: 1,
+	start: 2,
+	end: 3,
+	gate: 4,
+};
+
+class Measure {
+	constructor(repeat) {
+		this.timepoint = [];
+		this.repeat = repeat;
+	}
+};
+
 var MusicSync = {
 	osmd: undefined,
 	isRecording: false,
-	timepoints: [],
+	measures: [],
 };
 
 /* ====================================================================================
@@ -37,11 +56,47 @@ function initOSMD()
 	});
 }
 
+function initMeasures()
+{
+	MusicSync.measures = [];
+	let repeating = false;
+	for (let i = 0; i < MusicSync.osmd.GraphicSheet.measureList.length; ++i)
+	{
+		let musicSyncMeasure = null;
+		let measure = MusicSync.osmd.GraphicSheet.measureList[i][0].parentSourceMeasure;
+		if (0 < measure.lastRepetitionInstructions.length && 0 < measure.firstRepetitionInstructions.length)
+		{
+			musicSyncMeasure = new Measure(REPEAT.gate);
+			repeating = false;
+		}
+		else if (0 < measure.lastRepetitionInstructions.length)
+		{
+			musicSyncMeasure = new Measure(REPEAT.end);
+			repeating = false;
+		}
+		else if (0 < measure.firstRepetitionInstructions.length)
+		{
+			musicSyncMeasure = new Measure(REPEAT.start);
+			repeating = true;
+		}
+		else if (repeating)
+		{
+			musicSyncMeasure = new Measure(REPEAT.on);
+		}
+		else
+		{
+			musicSyncMeasure = new Measure(REPEAT.off);
+		}
+		MusicSync.measures.push(musicSyncMeasure);
+	}
+}
+
 function changeScore(file)
 {
 	var fileReader = new FileReader();
 	fileReader.onload = (event) => {
-		MusicSync.osmd.load(event.target.result).then(() => { 
+		MusicSync.osmd.load(event.target.result).then(() => {
+			initMeasures();
 			MusicSync.osmd.render();
 			createClickBoundingBoxes();
 			endLoadingSign();
