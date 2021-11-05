@@ -95,7 +95,7 @@ function initMeasures()
 	MusicSync.measures[0].timepoint.push(0);	//assign audio beginning to 1st measure just in case
 }
 
-function measureClickControl(measureIndex)
+function measureClickControl(measureIndex, viewCallback)
 {
 	const audioPlayer = document.getElementById(AUDIO_PLAYER_ID);
 	const measure = MusicSync.measures[measureIndex];
@@ -108,7 +108,7 @@ function measureClickControl(measureIndex)
 		}
 		else
 		{
-			measure.timepoint.length == 0 ? measure.timepoint.push(audioPlayer.currentTime) : measure.timepoint[0] = audioPlayer.currentTime;
+			measure.timepoint[0] = audioPlayer.currentTime;
 		}
 	}
 	else
@@ -151,7 +151,7 @@ function loadAndValidateSyncFile(file)
 	fileReader.onload = (event) => {
 		const inputFileString = event.target.result;
 		const inputFileObject = JSON.parse(inputFileString);
-		if (!loadSyncInput(inputFileObject))
+		if (!loadSyncInput(MusicSync.measures, inputFileObject))
 		{
 			error("Loaded sync file does not match musical score", true);
 		}
@@ -159,15 +159,15 @@ function loadAndValidateSyncFile(file)
 	fileReader.readAsText(file);
 }
 
-function loadSyncInput(inputObject)
+function loadSyncInput(musicSyncMeasures, inputObject, viewCallback)
 {
 	let valid = true;
-	let measures = MusicSync.measures.length;
+	let measures = musicSyncMeasures.length;
 	if (Array.isArray(inputObject))
 	{
-		if (inputObject.length != MusicSync.measures.length)
+		if (inputObject.length != musicSyncMeasures.length)
 		{
-			measures = (inputObject.length < MusicSync.measures.length ? inputObject.length : measures);
+			measures = (inputObject.length < musicSyncMeasures.length ? inputObject.length : measures);
 			valid = false;
 		}
 	}
@@ -184,17 +184,17 @@ function loadSyncInput(inputObject)
 			valid = false;
 			continue;
 		}
-		if (inputObject[i].repeat !== MusicSync.measures[i].repeat)
+		if (inputObject[i].repeat !== musicSyncMeasures[i].repeat)
 		{
 			valid = false;
 		}
-		if ((MusicSync.measures[i].repeat === REPEAT.off || MusicSync.measures[i].repeat === REPEAT.gate) && 1 < inputObject[i].timepoint.length)
+		if ((musicSyncMeasures[i].repeat === REPEAT.off || musicSyncMeasures[i].repeat === REPEAT.gate) && 1 < inputObject[i].timepoint.length)
 		{
 			valid = false;
 		}
 		for (j in inputObject[i].timepoint)
 		{
-			if (isNaN(j) || ((MusicSync.measures[i].repeat === REPEAT.off || MusicSync.measures[i].repeat === REPEAT.gate) && 0 < j))
+			if (isNaN(j) || ((musicSyncMeasures[i].repeat === REPEAT.off || musicSyncMeasures[i].repeat === REPEAT.gate) && 0 < j))
 			{
 				valid = false;
 				continue;
@@ -208,7 +208,7 @@ function loadSyncInput(inputObject)
 				}
 				else
 				{
-					MusicSync.measures[i].timepoint[j] = inputObject[i].timepoint[j];
+					musicSyncMeasures[i].timepoint[j] = inputObject[i].timepoint[j];
 				}
 			}
 		}
@@ -297,7 +297,7 @@ function resetInput(inputId)
 	input.value = "";
 }
 /* =====================================================================================
- * User Interface 
+ * View (User Interface)
  * =====================================================================================
  */
 function error(errorMessage, alert)
@@ -481,14 +481,14 @@ function selectAudioFile(input)
 	resetInput(AUDIO_FILE_INPUT);
 }
 
-function dropFile(event, select_fn, extensions)
+function dropFile(event, selectFunction, extensions)
 {
 	event.preventDefault();
 	for (extension in extensions)
 	{
 		if (event.dataTransfer.files[0].name.toLowerCase().endsWith(extensions[extension]))
 		{
-			select_fn(event.dataTransfer);
+			selectFunction(event.dataTransfer);
 			return;
 		}
 	}
