@@ -95,7 +95,7 @@ function initMeasures()
 	MusicSync.measures[0].timepoint.push(0);	//assign audio beginning to 1st measure just in case
 }
 
-function measureClickControl(measureIndex, viewCallback)
+function measureClickControl(measureIndex)
 {
 	const audioPlayer = document.getElementById(AUDIO_PLAYER_ID);
 	const measure = MusicSync.measures[measureIndex];
@@ -151,7 +151,7 @@ function loadAndValidateSyncFile(file)
 	fileReader.onload = (event) => {
 		const inputFileString = event.target.result;
 		const inputFileObject = JSON.parse(inputFileString);
-		if (!loadSyncInput(MusicSync.measures, inputFileObject))
+		if (!loadSyncInput(MusicSync.measures, inputFileObject, updateMeasureTimepointLabel))
 		{
 			error("Loaded sync file does not match musical score", true);
 		}
@@ -209,6 +209,7 @@ function loadSyncInput(musicSyncMeasures, inputObject, viewCallback)
 				else
 				{
 					musicSyncMeasures[i].timepoint[j] = inputObject[i].timepoint[j];
+					viewCallback(i);
 				}
 			}
 		}
@@ -435,6 +436,50 @@ function createClickBoundingBoxes()
 	}
 }
 
+function createMeasureTimepointLabels()
+{
+	for (let i = 0; i < MusicSync.measures.length; ++i)
+	{
+		updateMeasureTimepointLabel(i);
+	}
+}
+
+function updateMeasureTimepointLabel(measureIndex)
+{
+	const svgCanvas = document.getElementsByTagName("svg")[0];
+	let oldMeasureContainer = document.getElementById(`measure-label-${measureIndex}`);
+	if (oldMeasureContainer != null)
+	{
+		svgCanvas.removeChild(oldMeasureContainer);
+	}
+	const measure = MusicSync.osmd.GraphicSheet.measureList[measureIndex][0];
+	const x = (measure.boundingBox.absolutePosition.x + measure.rules.MeasureNumberLabelXOffset) * UNIT_IN_PIXELS;
+	const measureY = (measure.boundingBox.absolutePosition.y - measure.rules.MeasureNumberLabelOffset - measure.rules.MeasureNumberLabelHeight) * UNIT_IN_PIXELS;
+	const measureContainer = document.createElementNS("http://www.w3.org/2000/svg", "g");
+	measureContainer.setAttribute("id", `measure-label-${measureIndex}`);
+	for (let i = 0; i < MusicSync.measures[measureIndex].timepoint.length; ++i)
+	{
+		let y = measureY - (1.7 * UNIT_IN_PIXELS * (i + 1));
+		const offset = MusicSync.measures[measureIndex].timepoint.length - i - 1;
+		let minutes = (MusicSync.measures[measureIndex].timepoint[offset] / 60) >> 0;
+		let seconds = MusicSync.measures[measureIndex].timepoint[offset] % 60;
+		let measureLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+		measureLabel.setAttribute("x", x);
+		measureLabel.setAttribute("y", y);
+		measureLabel.setAttribute("stroke-width", "0.3");
+		measureLabel.setAttribute("fill", "black");
+		measureLabel.setAttribute("stroke", "none");
+		measureLabel.setAttribute("stroke-dasharray", "none");
+		measureLabel.setAttribute("font-family", "Times New Roman");
+		measureLabel.setAttribute("font-size", "15px");
+		measureLabel.setAttribute("font-weight", "normal");
+		measureLabel.setAttribute("font-style", "normal");
+		measureLabel.textContent = `${minutes}:${seconds.toFixed(3)}`;
+		measureContainer.appendChild(measureLabel);
+	}
+	svgCanvas.appendChild(measureContainer);
+}
+
 function makeAndClickDownloadAnchor(saved)
 {
 	var downloadAnchor = document.createElement("a");
@@ -560,6 +605,7 @@ function measureClick(measure)
 		return;
 	}
 	measureClickControl(measure);
+	updateMeasureTimepointLabel(measure);
 }
 
 function save()
@@ -588,6 +634,7 @@ function pageResize(event)
 	{
 		MusicSync.osmd.render();
 		createClickBoundingBoxes();
+		createMeasureTimepointLabels();
 	}
 }
 
