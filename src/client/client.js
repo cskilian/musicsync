@@ -142,6 +142,77 @@ function changeScore(file)
 	}
 }
 
+function loadAndValidateSyncFile(file)
+{
+	var fileReader = new FileReader();
+	fileReader.onload = (event) => {
+		const inputFileString = event.target.result;
+		const inputFileObject = JSON.parse(inputFileString);
+		if (!loadSyncInput(inputFileObject))
+		{
+			error("Loaded sync file does not match musical score", true);
+		}
+	};
+	fileReader.readAsText(file);
+}
+
+function loadSyncInput(inputObject)
+{
+	let valid = true;
+	let measures = MusicSync.measures.length;
+	if (Array.isArray(inputObject))
+	{
+		if (inputObject.length != MusicSync.measures.length)
+		{
+			measures = (inputObject.length < MusicSync.measures.length ? inputObject.length : measures);
+			valid = false;
+		}
+	}
+	else
+	{
+		valid = false;
+		return valid;
+	}
+	for (var i = 0; i < measures; ++i)
+	{
+		if (inputObject[i] === undefined ||
+			!Array.isArray(inputObject[i].timepoint))
+		{
+			valid = false;
+			continue;
+		}
+		if (inputObject[i].repeat !== MusicSync.measures[i].repeat)
+		{
+			valid = false;
+		}
+		if ((MusicSync.measures[i].repeat === REPEAT.off || MusicSync.measures[i].repeat === REPEAT.gate) && 1 < inputObject[i].timepoint.length)
+		{
+			valid = false;
+		}
+		for (j in inputObject[i].timepoint)
+		{
+			if (isNaN(j) || ((MusicSync.measures[i].repeat === REPEAT.off || MusicSync.measures[i].repeat === REPEAT.gate) && 0 < j))
+			{
+				valid = false;
+				continue;
+			}
+			else
+			{
+				if (isNaN(inputObject[i].timepoint[j]))
+				{
+					valid = false;
+					continue;
+				}
+				else
+				{
+					MusicSync.measures[i].timepoint[j] = inputObject[i].timepoint[j];
+				}
+			}
+		}
+	}
+	return valid;
+}
+
 function stopAudioControl()
 {
 	const audioPlayer = document.getElementById(AUDIO_PLAYER_ID);
@@ -374,6 +445,7 @@ function makeAndClickDownloadAnchor(saved)
 function selectSyncFile(input)
 {
 	const fileName = input.files[0].name;
+	loadAndValidateSyncFile(input.files[0]);
 	updateLabel(SYNC_FILE_NAME, fileName);
 }
 
