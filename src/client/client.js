@@ -4,8 +4,11 @@
  */
 //Element identifiers
 const AUDIO_FILE_NAME = "audio-name";
+const AUDIO_FILE_INPUT = "audio";
 const SCORE_FILE_NAME = "score-name";
+const SCORE_FILE_INPUT = "score";
 const SYNC_FILE_NAME = "sync-name";
+const SYNC_FILE_INPUT = "sync";
 const AUDIO_PLAYER_ID = "audio-player";
 const PLAY_PAUSE_BUTTON = "play-pause-button";
 const MANUAL_SYNC_BUTTON = "manual-sync-button";
@@ -288,7 +291,11 @@ function measuresToJSON()
 	return [jsonString, fileName];
 }
 
-
+function resetInput(inputId)
+{
+	const input = document.getElementById(inputId);
+	input.value = "";
+}
 /* =====================================================================================
  * User Interface 
  * =====================================================================================
@@ -447,6 +454,7 @@ function selectSyncFile(input)
 	const fileName = input.files[0].name;
 	loadAndValidateSyncFile(input.files[0]);
 	updateLabel(SYNC_FILE_NAME, fileName);
+	resetInput(SYNC_FILE_INPUT);
 }
 
 /*
@@ -458,6 +466,7 @@ function selectScoreFile(input)
 	startLoadingSign();
 	changeScore(input.files[0]);
 	updateLabel(SCORE_FILE_NAME, fileName);
+	resetInput(SCORE_FILE_INPUT);
 }
 
 /*
@@ -469,6 +478,7 @@ function selectAudioFile(input)
 	updateLabel(AUDIO_FILE_NAME, input.files[0].name);
 	updateSeeker();
 	updatePlayPauseButton();
+	resetInput(AUDIO_FILE_INPUT);
 }
 
 function dropFile(event, select_fn, extensions)
