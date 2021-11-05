@@ -377,18 +377,6 @@ function selectSyncFile(input)
 	updateLabel(SYNC_FILE_NAME, fileName);
 }
 
-function dropSyncFile(event)
-{
-	if (event.dataTransfer.files[0].name.toLowerCase().endsWith(".json"))
-	{
-		selectSyncFile(event.dataTransfer);	
-	}
-	else
-	{
-		error("You need to drag a valid .json file", true);
-	}
-	event.preventDefault();
-}
 /*
  * Updates file label after upload
  */
@@ -400,19 +388,6 @@ function selectScoreFile(input)
 	updateLabel(SCORE_FILE_NAME, fileName);
 }
 
-function dropScoreFile(event)
-{
-	const fileName = event.dataTransfer.files[0].name.toLowerCase();
-	if (fileName.endsWith(".musicxml") || fileName.endsWith(".mxl") || fileName.endsWith(".xml"))
-	{
-		selectScoreFile(event.dataTransfer);
-	}
-	else
-	{
-		error("You need to drag a valid MusicXML file", true);
-	}
-	event.preventDefault();
-}
 /*
  * Custom handler for selecting audio file. It sets the source for the player to the given audio file
  */
@@ -424,18 +399,18 @@ function selectAudioFile(input)
 	updatePlayPauseButton();
 }
 
-function dropAudioFile(event)
+function dropFile(event, select_fn, extensions)
 {
-	const fileName = event.dataTransfer.files[0].name.toLowerCase();
-	if (fileName.endsWith(".mp3") || fileName.endsWith(".wav"))
-	{
-		selectAudioFile(event.dataTransfer);
-	}
-	else
-	{
-		error("You need to drag a valid Wave or MP3 file", true);
-	}
 	event.preventDefault();
+	for (extension in extensions)
+	{
+		if (event.dataTransfer.files[0].name.toLowerCase().endsWith(extensions[extension]))
+		{
+			select_fn(event.dataTransfer);
+			return;
+		}
+	}
+	error(`You need to drag a valid ${extensions[0]} file`, true);
 }
 
 function playPauseAudio()

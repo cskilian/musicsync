@@ -8,7 +8,7 @@
 	<body>
 		<script src="opensheetmusicdisplay.min.js" defer></script>
 		<script src="client.js" defer></script>
-		<div class="file-box" ondragenter="event.preventDefault()" ondragover="event.preventDefault()" ondrop="dropAudioFile(event)">
+		<div class="file-box" ondragenter="event.preventDefault()" ondragover="event.preventDefault()" ondrop="dropFile(event, selectAudioFile, ['.mp3', '.wav'])">
 			<input type="file" class="file-input" id="audio" name="audio" accept=".mp3, .wav, audio/mpeg" onchange="selectAudioFile(this)">
 			<label for="audio">
 				<span id="audio-name" class="file-frame">Audio:</span>
@@ -18,7 +18,7 @@
 				</span>
 			</label>
 		</div>
-		<div class="file-box" ondragenter="event.preventDefault()" ondragover="event.preventDefault()" ondrop="dropScoreFile(event)">
+		<div class="file-box" ondragenter="event.preventDefault()" ondragover="event.preventDefault()" ondrop="dropFile(event, selectScoreFile, ['.musicxml', '.mxl', '.xml'])">
 			<input type="file" class="file-input" id="score" name="score" accept=".musicxml, .mxl, application/vnd.recordare.musicxml+xml, application/vnd.recordare.musicxml, .xml" onchange="selectScoreFile(this)">
 			<label for="score">
 				<span id="score-name" class="file-frame">Sheetmusic:</span>
@@ -28,7 +28,7 @@
 				</span>
 			</label>
 		</div>
-		<div class="file-box" ondragenter="event.preventDefault()" ondragover="event.preventDefault()" ondrop="dropSyncFile(event)">
+		<div class="file-box" ondragenter="event.preventDefault()" ondragover="event.preventDefault()" ondrop="dropFile(event, selectSyncFile, ['.json'])">
 			<input type="file" class="file-input" id="sync" name="sync" accept=".json, application/json" onchange="selectSyncFile(this)">
 			<label for="sync">
 				<span id="sync-name" class="file-frame">Synchronization:</span>
