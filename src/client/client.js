@@ -539,6 +539,54 @@ function deleteTimepointEditor()
 	const svgCanvas = document.getElementsByTagName("svg")[0];
 	svgCanvas.removeEventListener("click", deleteTimepointEditor);
 }
+
+function extractTimepointEditorRowData(id)
+{
+	let timepointEditor = document.getElementById(TIMEPOINT_EDITOR);
+	let timepointEditorRow = document.getElementById(TIMEPOINT_EDITOR + "-" + id);
+	let inputs = [];
+	let timepointIndex = 0;
+	for (let i = 0; i < timepointEditor.children.length; ++i)
+	{
+		if (timepointEditor.children[i] === timepointEditorRow)
+		{
+			timepointIndex = i;
+			break;
+		}
+	}
+	for (let i = 0; i < timepointEditorRow.children.length; ++i)
+	{
+		if (timepointEditorRow.children[i].tagName === "INPUT")
+		{
+			inputs.push(timepointEditorRow.children[i]);
+		}
+	}
+	let minutes = Number(inputs[0].value);
+	let seconds = Number(inputs[1].value);
+	return [minutes, seconds, timepointIndex];
+}
+
+function deleteTimepointEditorRow(id)
+{
+	let timepointEditor = document.getElementById(TIMEPOINT_EDITOR);
+	let timepointEditorRow = document.getElementById(TIMEPOINT_EDITOR + "-"+ id);
+	let timepointIndex = 0;
+	for (let i = 0; i < timepointEditor.children.length; ++i)
+	{
+		if (timepointEditor.children[i] === timepointEditorRow)
+		{
+			timepointIndex = i;
+			break;
+		}
+	}
+	timepointEditorRow.remove();
+	if (timepointEditor.children.length == 0)
+	{
+		deleteTimepointEditor();
+	}
+	return timepointIndex;
+}
+
 /* =======================================================================================
  * Event Handlers
  * =======================================================================================
@@ -670,45 +718,17 @@ function measureLabelClick(measure)
 
 function timepointEditorSave(measureIndex, id)
 {
-	let timepointEditor = document.getElementById(TIMEPOINT_EDITOR);
-	let timepointEditorRow = document.getElementById(TIMEPOINT_EDITOR + "-" + id);
-	let inputs = [];
-	let timepointIndex = 0;
-	for (let i = 0; i < timepointEditor.children.length; ++i)
-	{
-		if (timepointEditor.children[i] === timepointEditorRow)
-		{
-			timepointIndex = i;
-			break;
-		}
-	}
-	for (let i = 0; i < timepointEditorRow.children.length; ++i)
-	{
-		if (timepointEditorRow.children[i].tagName === "INPUT")
-		{
-			inputs.push(timepointEditorRow.children[i]);
-		}
-	}
-	let minutes = Number(inputs[0].value);
-	let seconds = Number(inputs[1].value);
+	const data = extractTimepointEditorRowData(id);
+	const minutes = data[0];
+	const seconds = data[1];
+	const timepointIndex = data[2];
 	MusicSync.measures[measureIndex].timepoint[timepointIndex] = minutes * 60 + seconds;
 	updateMeasureTimepointLabel(measureIndex);
 }
 
 function timepointEditorDelete(measureIndex, id)
 {
-	let timepointEditor = document.getElementById(TIMEPOINT_EDITOR);
-	let timepointEditorRow = document.getElementById(TIMEPOINT_EDITOR + "-"+ id);
-	let timepointIndex = 0;
-	for (let i = 0; i < timepointEditor.children.length; ++i)
-	{
-		if (timepointEditor.children[i] === timepointEditorRow)
-		{
-			timepointIndex = i;
-			break;
-		}
-	}
-	timepointEditorRow.remove();
+	const timepointIndex = deleteTimepointEditorRow(id);
 	MusicSync.measures[measureIndex].timepoint.splice(timepointIndex, 1);
 	updateMeasureTimepointLabel(measureIndex);
 }
