@@ -5,7 +5,8 @@ const port = 3000;
 
 const CLIENT_DIR = path.join(__dirname, 'client');
 
-app.use(express.static(CLIENT_DIR));
+app.use('/css', express.static(path.join(__dirname, 'client/css')));
+app.use('/', express.static(CLIENT_DIR));
 
 app.get('/', (req, res) => {
 	res.sendFile('client.html', { root: CLIENT_DIR});
