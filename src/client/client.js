@@ -381,11 +381,11 @@ function updateManualSyncButton()
 	const button = document.getElementById(MANUAL_SYNC_BUTTON);
 	if (MusicSync.isRecording)
 	{
-		button.style.color = "red";
+		button.style.backgroundColor = "red";
 	}
 	else
 	{
-		button.style.color = null;
+		button.style.backgroundColor = null;
 	}
 }
 
