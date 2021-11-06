@@ -507,10 +507,6 @@ function makeAndClickDownloadAnchor(saved)
 
 function createTimepointEditor(measureIndex)
 {
-	if (document.getElementById(TIMEPOINT_EDITOR) !== null)
-	{
-		document.getElementById(TIMEPOINT_EDITOR).remove();
-	}
 	let editor = document.createElement("div");
 	editor.setAttribute("id", TIMEPOINT_EDITOR);
 	editor.setAttribute("style", "position: absolute; top: 50%; left: 50%; z-index: 10; background-color: grey; display: table-cell; vertical-align: middle");
@@ -530,8 +526,19 @@ function createTimepointEditor(measureIndex)
 		editor.insertAdjacentHTML("beforeend", timepointHTML);
 	}
 	document.body.appendChild(editor);
+	const svgCanvas = document.getElementsByTagName("svg")[0];
+	svgCanvas.addEventListener("click", deleteTimepointEditor, true);
 }
 
+function deleteTimepointEditor()
+{
+	if (document.getElementById(TIMEPOINT_EDITOR) !== null)
+	{
+		document.getElementById(TIMEPOINT_EDITOR).remove();
+	}
+	const svgCanvas = document.getElementsByTagName("svg")[0];
+	svgCanvas.removeEventListener("click", deleteTimepointEditor);
+}
 /* =======================================================================================
  * Event Handlers
  * =======================================================================================
@@ -657,6 +664,7 @@ function measureLabelClick(measure)
 		error("Clicked on timepoint label for a non-existent measure", false);
 		return;
 	}
+	deleteTimepointEditor();
 	createTimepointEditor(measure);
 }
 
@@ -727,6 +735,7 @@ function initAll(event)
 
 function pageResize(event)
 {
+	deleteTimepointEditor();
 	if (MusicSync.osmd !== undefined && MusicSync.osmd.Sheet !== undefined)
 	{
 		MusicSync.osmd.render();
