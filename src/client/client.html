@@ -4,6 +4,7 @@
 		<meta charset="utf-8">
 		<title>MusicSync</title>
 		<link rel="stylesheet" type="text/css" href="client.css">
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
 	</head>
 	<body>
 		<noscript>This web application does not work without JavaScript :(</noscript>
@@ -14,7 +15,7 @@
 			<label for="audio">
 				<span id="audio-name" class="file-frame">Audio:</span>
 				<span class="file-button">
-					<i class="fa fa-upload" aria-hidden="true"></i>
+					<i class="fa fa-folder" aria-hidden="true"></i>
 					Select File
 				</span>
 			</label>
@@ -24,7 +25,7 @@
 			<label for="score">
 				<span id="score-name" class="file-frame">Sheetmusic:</span>
 				<span class="file-button">
-					<i class="fa fa-upload" aria-hidden="true"></i>
+					<i class="fa fa-folder" aria-hidden="true"></i>
 					Select File
 				</span>
 			</label>
@@ -34,19 +35,44 @@
 			<label for="sync">
 				<span id="sync-name" class="file-frame">Synchronization:</span>
 				<span class="file-button">
-					<i class="fa fa-upload" aria-hidden="true"></i>
+					<i class="fa fa-folder" aria-hidden="true"></i>
 					Select File
 				</span>
 			</label>
 		</div>
 		<div id="audio-box">
 			<audio id="audio-player" onended="resetAudio()"></audio>
-			<button class="audio-button" id="auto-sync-button" onclick="">Auto Sync</button>
-			<button class="audio-button" id="manual-sync-button" onclick="manualSync()">Manual Sync</button>
-			<button class="audio-button" id="play-pause-button" onclick="playPauseAudio()">Play</button>
+			<button class="audio-button" id="auto-sync-button" onclick="">
+				<span class="">
+					<i class="fa fa-upload"></i>
+					Auto Sync
+				</span>
+			</button>
+			<button class="audio-button" id="manual-sync-button" onclick="manualSync()">
+				<span class="">
+					<i class="fa fa-circle"></i>
+					Manual Sync
+				</span>
+			</button>
+			<button class="audio-button" id="play-pause-button" onclick="playPauseAudio()">
+				<span class="">
+					<i class="fa fa-play"></i>
+					<span>Play</span>
+				</span>
+			</button>
 			<div id="time-line" onclick="seekOnTimeline(event)"><div id="seeker"></div></div>
-			<button class="audio-button" id="stop-button" onclick="stopAudio()">Stop</button>
-			<button class="audio-button" id="save-button" onclick="save()">Save</button>
+			<button class="audio-button" id="stop-button" onclick="stopAudio()">
+				<span class="">
+					<i class="fa fa-stop"></i>
+					Stop
+				</span>
+			</button>
+			<button class="audio-button" id="save-button" onclick="save()">
+				<span class="">
+					<i class="fa fa-download"></i>
+					Save
+				</span>
+			</button>
 		</div>
 		<div id="loading-sign" style="display: none;"><span style="font-size: xx-large;">Loading ...</span></div>
 		<div style="height: 100%; width: 100%; overflow: hidden; position: absolute; box-sizing: border-box; padding: 50px;">

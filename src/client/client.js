@@ -20,7 +20,7 @@ const LOADING_SIGN = "loading-sign";
 //VexFlow constants
 const UNIT_IN_PIXELS = 10;
 
-//Application specific globals
+//Application constants and global
 const REPEAT = {
 	off: 0,
 	on: 1,
@@ -362,15 +362,18 @@ function updatePlayPauseButton()
 {
 	const audioPlayer = document.getElementById(AUDIO_PLAYER_ID);
 	const button = document.getElementById(PLAY_PAUSE_BUTTON);
+	const label = button.children[0].children[1];
+	const icon = button.children[0].children[0];
 	if (audioPlayer.src == "" || audioPlayer.paused)
 	{
-		button.innerText = "Play";
+		label.innerText = "Play";
+		icon.setAttribute("class", "fa fa-play");
 	}
 	else
 	{
-		button.innerText = "Pause";
+		label.innerText = "Pause";
+		icon.setAttribute("class", "fa fa-pause");
 	}
-
 }
 
 function updateManualSyncButton()

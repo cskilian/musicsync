@@ -1,5 +1,6 @@
 body {
   overflow: hidden;
+  padding: 5px;
 }
 
 .file-box {
@@ -18,17 +19,18 @@ body {
 .file-frame {
   display: inline-block;
   width: 100%;
-  border: 1px solid;
+  border: 2px solid;
   padding: 5px 0px 5px 5px;
   box-sizing: border-box;
   height: calc(2rem - 2px);
 }
 
 .file-button {
-  background: red;
-  padding: 5px;
+  background: gray;
+  padding: 3px;
   position: absolute;
-  border: 1px solid;
+  border-style: solid;
+  border-width: 2px 2px 2px 2px;
   top: 0px;
   right: 0px;
 }
