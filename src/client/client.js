@@ -39,6 +39,7 @@ class Measure {
 var MusicSync = {
 	osmd: undefined,
 	isRecording: false,
+	recordingClickCounts: undefined,
 	measures: [],
 };
 
@@ -104,7 +105,15 @@ function measureClickControl(measureIndex)
 	{
 		if (repeating)
 		{
-			measure.timepoint.push(audioPlayer.currentTime);
+			if (MusicSync.recordingClickCounts == undefined || MusicSync.recordingClickCounts[measureIndex] == undefined)
+			{
+				measure.timepoint[0] = audioPlayer.currentTime;
+				MusicSync.recordingClickCounts[measureIndex] = 1;
+			}
+			else
+			{
+				measure.timepoint[MusicSync.recordingClickCounts[measureIndex]++] = audioPlayer.currentTime;
+			}
 		}
 		else
 		{
@@ -228,6 +237,7 @@ function manualSyncControl()
 {
 	const audioPlayer = document.getElementById(AUDIO_PLAYER_ID);
 	MusicSync.isRecording = !MusicSync.isRecording;
+	MusicSync.recordingClickCounts = [];
 	if (MusicSync.isRecording && audioPlayer.paused)
 	{
 		audioPlayer.play();
