@@ -16,6 +16,7 @@ const TIMELINE_SEEKER = "seeker";
 const TIMELINE = "time-line";
 const SHEET_MUSIC_CONTAINER = "osmd-container";
 const LOADING_SIGN = "loading-sign";
+const TIMEPOINT_EDITOR = "timepoint-editor";
 
 //VexFlow constants
 const UNIT_IN_PIXELS = 10;
@@ -470,6 +471,7 @@ function updateMeasureTimepointLabel(measureIndex)
 	const measureY = (measure.boundingBox.absolutePosition.y - measure.rules.MeasureNumberLabelOffset - measure.rules.MeasureNumberLabelHeight) * UNIT_IN_PIXELS;
 	const measureContainer = document.createElementNS("http://www.w3.org/2000/svg", "g");
 	measureContainer.setAttribute("id", `measure-label-${measureIndex}`);
+	measureContainer.setAttribute("onclick", `measureLabelClick(${measureIndex})`);
 	for (let i = 0; i < MusicSync.measures[measureIndex].timepoint.length; ++i)
 	{
 		let y = measureY - (1.7 * UNIT_IN_PIXELS * (i + 1));
@@ -501,6 +503,33 @@ function makeAndClickDownloadAnchor(saved)
 	document.body.appendChild(downloadAnchor);
 	downloadAnchor.click();
 	downloadAnchor.remove();
+}
+
+function createTimepointEditor(measureIndex)
+{
+	if (document.getElementById(TIMEPOINT_EDITOR) !== null)
+	{
+		document.getElementById(TIMEPOINT_EDITOR).remove();
+	}
+	let editor = document.createElement("div");
+	editor.setAttribute("id", TIMEPOINT_EDITOR);
+	editor.setAttribute("style", "position: absolute; top: 50%; left: 50%; z-index: 10; background-color: grey; display: table-cell; vertical-align: middle");
+	for (i in MusicSync.measures[measureIndex].timepoint)
+	{
+		let minutes = (MusicSync.measures[measureIndex].timepoint[i] / 60) >> 0;
+		let seconds = MusicSync.measures[measureIndex].timepoint[i] % 60;
+		let timepointHTML = `
+			<div id="${TIMEPOINT_EDITOR}-${i}">
+				<input type="number" min="0" value="${minutes}">
+				<span>:</span>
+				<input type="number" min="0" max="59.999" step="0.1" value="${seconds.toFixed(3)}">
+				<span style="padding: 3px; border: 2px solid;" onclick="timepointEditorSave(${measureIndex}, ${i})"><i class="fa fa-edit" aria-hidden="true"></i></span>
+				<span style="padding: 3px; border: 2px solid;" onclick="timepointEditorDelete(${measureIndex}, ${i})"><i class="fa fa-eraser" aria-hidden="true"></i></span>
+			</div>
+		`;
+		editor.insertAdjacentHTML("beforeend", timepointHTML);
+	}
+	document.body.appendChild(editor);
 }
 
 /* =======================================================================================
@@ -619,6 +648,61 @@ function measureClick(measure)
 	}
 	measureClickControl(measure);
 	updateMeasureTimepointLabel(measure);
+}
+
+function measureLabelClick(measure)
+{
+	if (MusicSync.measures.length <= measure)
+	{
+		error("Clicked on timepoint label for a non-existent measure", false);
+		return;
+	}
+	createTimepointEditor(measure);
+}
+
+function timepointEditorSave(measureIndex, id)
+{
+	let timepointEditor = document.getElementById(TIMEPOINT_EDITOR);
+	let timepointEditorRow = document.getElementById(TIMEPOINT_EDITOR + "-" + id);
+	let inputs = [];
+	let timepointIndex = 0;
+	for (let i = 0; i < timepointEditor.children.length; ++i)
+	{
+		if (timepointEditor.children[i] === timepointEditorRow)
+		{
+			timepointIndex = i;
+			break;
+		}
+	}
+	for (let i = 0; i < timepointEditorRow.children.length; ++i)
+	{
+		if (timepointEditorRow.children[i].tagName === "INPUT")
+		{
+			inputs.push(timepointEditorRow.children[i]);
+		}
+	}
+	let minutes = Number(inputs[0].value);
+	let seconds = Number(inputs[1].value);
+	MusicSync.measures[measureIndex].timepoint[timepointIndex] = minutes * 60 + seconds;
+	updateMeasureTimepointLabel(measureIndex);
+}
+
+function timepointEditorDelete(measureIndex, id)
+{
+	let timepointEditor = document.getElementById(TIMEPOINT_EDITOR);
+	let timepointEditorRow = document.getElementById(TIMEPOINT_EDITOR + "-"+ id);
+	let timepointIndex = 0;
+	for (let i = 0; i < timepointEditor.children.length; ++i)
+	{
+		if (timepointEditor.children[i] === timepointEditorRow)
+		{
+			timepointIndex = i;
+			break;
+		}
+	}
+	timepointEditorRow.remove();
+	MusicSync.measures[measureIndex].timepoint.splice(timepointIndex, 1);
+	updateMeasureTimepointLabel(measureIndex);
 }
 
 function save()
