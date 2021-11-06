@@ -509,18 +509,18 @@ function createTimepointEditor(measureIndex)
 {
 	let editor = document.createElement("div");
 	editor.setAttribute("id", TIMEPOINT_EDITOR);
-	editor.setAttribute("style", "position: absolute; top: 50%; left: 50%; z-index: 10; background-color: grey; display: table-cell; vertical-align: middle");
+	editor.setAttribute("style", "position: absolute; top: 50%; left: 50%; z-index: 10; background-color: grey; border: 2px solid; display: table-cell; vertical-align: middle");
 	for (i in MusicSync.measures[measureIndex].timepoint)
 	{
 		let minutes = (MusicSync.measures[measureIndex].timepoint[i] / 60) >> 0;
 		let seconds = MusicSync.measures[measureIndex].timepoint[i] % 60;
 		let timepointHTML = `
-			<div id="${TIMEPOINT_EDITOR}-${i}">
+			<div style="border-width: 0px 0px 1px 0px; border-style: solid;" id="${TIMEPOINT_EDITOR}-${i}">
 				<input type="number" min="0" value="${minutes}">
-				<span>:</span>
+				<span style="padding: 3px;">:</span>
 				<input type="number" min="0" max="59.999" step="0.1" value="${seconds.toFixed(3)}">
-				<span style="padding: 3px; border: 2px solid;" onclick="timepointEditorSave(${measureIndex}, ${i})"><i class="fa fa-edit" aria-hidden="true"></i></span>
-				<span style="padding: 3px; border: 2px solid;" onclick="timepointEditorDelete(${measureIndex}, ${i})"><i class="fa fa-eraser" aria-hidden="true"></i></span>
+				<span style="padding: 3px;" onclick="timepointEditorSave(${measureIndex}, ${i})"><i class="fa fa-edit" aria-hidden="true"></i></span>
+				<span style="padding: 3px;" onclick="timepointEditorDelete(${measureIndex}, ${i})"><i class="fa fa-eraser" aria-hidden="true"></i></span>
 			</div>
 		`;
 		editor.insertAdjacentHTML("beforeend", timepointHTML);
