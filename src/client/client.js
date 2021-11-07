@@ -508,8 +508,12 @@ function makeAndClickDownloadAnchor(saved)
 function createTimepointEditor(measureIndex)
 {
 	let editor = document.createElement("div");
+	const measureLabelContainer = document.getElementById(`measure-label-${measureIndex}`);
+	const osmdContainer = document.getElementById(SHEET_MUSIC_CONTAINER);
+	const x = Number.parseInt(measureLabelContainer.children[0].getAttributeNode("x").nodeValue) + osmdContainer.getBoundingClientRect().left;
+	const y = Number.parseInt(measureLabelContainer.children[0].getAttributeNode("y").nodeValue) - osmdContainer.scrollTop + osmdContainer.getBoundingClientRect().top;
 	editor.setAttribute("id", TIMEPOINT_EDITOR);
-	editor.setAttribute("style", "position: absolute; top: 50%; left: 50%; z-index: 10; background-color: grey; border: 2px solid; display: table-cell; vertical-align: middle");
+	editor.setAttribute("style", `position: absolute; top: ${y}px; left: ${x}px; z-index: 10; background-color: grey; border: 2px solid; display: table-cell; vertical-align: middle`);
 	for (i in MusicSync.measures[measureIndex].timepoint)
 	{
 		let minutes = (MusicSync.measures[measureIndex].timepoint[i] / 60) >> 0;
@@ -524,6 +528,10 @@ function createTimepointEditor(measureIndex)
 			</div>
 		`;
 		editor.insertAdjacentHTML("beforeend", timepointHTML);
+	}
+	if (osmdContainer.getBoundingClientRect().right < x + 340)
+	{
+		editor.style.left = `${x - ((x + 340) - osmdContainer.getBoundingClientRect().right)}px`;
 	}
 	document.body.appendChild(editor);
 	const svgCanvas = document.getElementsByTagName("svg")[0];
