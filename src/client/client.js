@@ -20,6 +20,7 @@ const TIMEPOINT_EDITOR = "timepoint-editor";
 
 //VexFlow constants
 const UNIT_IN_PIXELS = 10;
+const TIMEPOINT_EDITOR_WIDTH = 510;
 
 //Application constants and global
 const REPEAT = {
@@ -529,11 +530,11 @@ function createTimepointEditor(measureIndex)
 		`;
 		editor.insertAdjacentHTML("beforeend", timepointHTML);
 	}
-	if (osmdContainer.getBoundingClientRect().right < x + 340)
-	{
-		editor.style.left = `${x - ((x + 340) - osmdContainer.getBoundingClientRect().right)}px`;
-	}
 	document.body.appendChild(editor);
+	if (osmdContainer.getBoundingClientRect().right < x + TIMEPOINT_EDITOR_WIDTH)
+	{
+		editor.style.left = `${x - ((x + TIMEPOINT_EDITOR_WIDTH) - osmdContainer.getBoundingClientRect().right)}px`;
+	}
 	const svgCanvas = document.getElementsByTagName("svg")[0];
 	svgCanvas.addEventListener("click", deleteTimepointEditor, true);
 }
