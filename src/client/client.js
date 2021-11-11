@@ -439,6 +439,8 @@ function createClickBoundingBoxes()
 			let y = measure.boundingBox.absolutePosition.y * UNIT_IN_PIXELS;
 			let width = measure.boundingBox.boundingRectangle.width * UNIT_IN_PIXELS;
 			let height = measure.boundingBox.boundingRectangle.height * UNIT_IN_PIXELS;
+			let stave_height = measure.stave.height;
+			height = (height < stave_height ? stave_height : height); 
 			var boundingBox = document.createElementNS("http://www.w3.org/2000/svg", "rect");
 			boundingBox.setAttribute("x", x);
 			boundingBox.setAttribute("y", y);
