@@ -69,6 +69,10 @@ function initMeasures()
 	for (let i = 0; i < MusicSync.osmd.GraphicSheet.measureList.length; ++i)
 	{
 		let musicSyncMeasure = null;
+		if (MusicSync.osmd.GraphicSheet.measureList[i][0] === undefined || MusicSync.osmd.GraphicSheet.measureList[i][0] === null)
+		{
+			continue;
+		}
 		let measure = MusicSync.osmd.GraphicSheet.measureList[i][0].parentSourceMeasure;
 		if (0 < measure.lastRepetitionInstructions.length && 0 < measure.firstRepetitionInstructions.length)
 		{
@@ -435,6 +439,10 @@ function createClickBoundingBoxes()
 		for (let i = 0; i < MusicSync.osmd.GraphicSheet.measureList[bar].length; ++i)
 		{
 			let measure = MusicSync.osmd.GraphicSheet.measureList[bar][i];
+			if (measure === undefined || measure === null)
+			{
+				continue;
+			}
 			let x = measure.boundingBox.absolutePosition.x * UNIT_IN_PIXELS;
 			let y = measure.boundingBox.absolutePosition.y * UNIT_IN_PIXELS;
 			let width = measure.boundingBox.boundingRectangle.width * UNIT_IN_PIXELS;
