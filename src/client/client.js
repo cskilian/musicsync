@@ -41,10 +41,11 @@ class Measure {
 };
 
 var MusicSync = {
-	osmd: undefined,
-	isRecording: false,
-	recordingClickCounts: undefined,
-	measures: [],
+	osmd: undefined,                 //holds the opensheetmusicdisplay data structures
+	isRecording: false,              //this is a flag whether we are manually syncing when playing
+	recordingClickCounts: undefined, //this is an object for recording the number of times we click on a measure during manual sync, it is cleared when manual sync stops
+	measures: [],                    //this holds the Measure object containing synced timepoints and repetition information
+	timepointToMeasure: undefined,   //this holds mapping from timepoint to measure
 };
 
 /* ====================================================================================
@@ -125,6 +126,18 @@ function initMeasures()
 	MusicSync.measures[0].timepoint.push(0);	//assign audio beginning to 1st measure just in case
 }
 
+function initTimepointToMeasure()
+{
+	MusicSync.timepointToMeasure = SortedMap();
+	for (let i = 0; i < MusicSync.measures.length; ++i)
+	{
+		for (let j = 0; j < MusicSync.measures[i].timepoint.length; ++j)
+		{
+			MusicSync.timepointToMeasure.add(i, MusicSync.measures[i].timepoint[j]);
+		}
+	}
+}
+
 function measureClickControl(measureIndex)
 {
 	const audioPlayer = document.getElementById(AUDIO_PLAYER_ID);
@@ -136,17 +149,23 @@ function measureClickControl(measureIndex)
 		{
 			if (MusicSync.recordingClickCounts == undefined || MusicSync.recordingClickCounts[measureIndex] == undefined)
 			{
+				MusicSync.timepointToMeasure.delete(measure.timepoint[0]);
 				measure.timepoint[0] = audioPlayer.currentTime;
+				MusicSync.timepointToMeasure.add(measureIndex, measure.timepoint[0]);
 				MusicSync.recordingClickCounts[measureIndex] = 1;
 			}
 			else
 			{
-				measure.timepoint[MusicSync.recordingClickCounts[measureIndex]++] = audioPlayer.currentTime;
+				measure.timepoint[MusicSync.recordingClickCounts[measureIndex]] = audioPlayer.currentTime;
+				MusicSync.timepointToMeasure.add(measureIndex, measure.timepoint[MusicSync.recordingClickCounts[measureIndex]]);
+				MusicSync.recordingClickCounts[measureIndex]++;
 			}
 		}
 		else
 		{
+			MusicSync.timepointToMeasure.delete(measure.timepoint[0]);
 			measure.timepoint[0] = audioPlayer.currentTime;
+			MusicSync.timepointToMeasure.add(measureIndex, measure.timepoint[0]);
 		}
 	}
 	else
@@ -169,6 +188,7 @@ function changeScore(file)
 	fileReader.onload = (event) => {
 		MusicSync.osmd.load(event.target.result).then(() => {
 			initMeasures();
+			initTimepointToMeasure();
 			MusicSync.osmd.render();
 			createClickBoundingBoxes();
 			endLoadingSign();
@@ -194,7 +214,7 @@ function loadAndValidateSyncFile(file)
 	fileReader.onload = (event) => {
 		const inputFileString = event.target.result;
 		const inputFileObject = JSON.parse(inputFileString);
-		if (!loadSyncInput(MusicSync.measures, inputFileObject, updateMeasureTimepointLabel))
+		if (!loadSyncInput(MusicSync.measures, MusicSync.timepointToMeasure, inputFileObject, updateMeasureTimepointLabel))
 		{
 			error("Loaded sync file does not match musical score", true);
 		}
@@ -202,7 +222,7 @@ function loadAndValidateSyncFile(file)
 	fileReader.readAsText(file);
 }
 
-function loadSyncInput(musicSyncMeasures, inputObject, viewCallback)
+function loadSyncInput(musicSyncMeasures, musicSyncTimepointToMeasure, inputObject, viewCallback)
 {
 	let valid = true;
 	let measures = musicSyncMeasures.length;
@@ -251,7 +271,9 @@ function loadSyncInput(musicSyncMeasures, inputObject, viewCallback)
 				}
 				else
 				{
+					musicSyncTimepointToMeasure.delete(musicSyncMeasures[i].timepoint[j]);
 					musicSyncMeasures[i].timepoint[j] = inputObject[i].timepoint[j];
+					musicSyncTimepointToMeasure.add(i, musicSyncMeasures[i].timepoint[j]);
 					viewCallback(i);
 				}
 			}
@@ -484,6 +506,7 @@ function createClickBoundingBoxes()
 			boundingBox.setAttribute("height", height);
 			boundingBox.setAttribute("style", "pointer-events: bounding-box; opacity: 0;");
 			boundingBox.setAttribute("onclick", `measureClick(${bar})`);
+			boundingBox.setAttribute("id", `measure-box-${bar}`);
 			svgCanvas.appendChild(boundingBox);
 		}
 	}
@@ -555,6 +578,7 @@ function createTimepointEditor(measureIndex)
 	editor.setAttribute("style", `position: absolute; top: ${y}px; left: ${x}px; z-index: 10; background-color: grey; border: 2px solid; display: table-cell; vertical-align: middle`);
 	for (i in MusicSync.measures[measureIndex].timepoint)
 	{
+		const absolute_seconds = MusicSync.measures[measureIndex].timepoint[i];
 		let minutes = (MusicSync.measures[measureIndex].timepoint[i] / 60) >> 0;
 		let seconds = MusicSync.measures[measureIndex].timepoint[i] % 60;
 		let timepointHTML = `
@@ -562,8 +586,8 @@ function createTimepointEditor(measureIndex)
 				<input type="number" min="0" value="${minutes}">
 				<span style="padding: 3px;">:</span>
 				<input type="number" min="0" max="59.999" step="0.1" value="${seconds.toFixed(3)}">
-				<span style="padding: 3px;" onclick="timepointEditorSave(${measureIndex}, ${i})"><i class="fa fa-edit" aria-hidden="true"></i></span>
-				<span style="padding: 3px;" onclick="timepointEditorDelete(${measureIndex}, ${i})"><i class="fa fa-eraser" aria-hidden="true"></i></span>
+				<span style="padding: 3px;" onclick="timepointEditorSave(${measureIndex}, ${i}, ${absolute_seconds})"><i class="fa fa-edit" aria-hidden="true"></i></span>
+				<span style="padding: 3px;" onclick="timepointEditorDelete(${measureIndex}, ${i}, ${absolute_seconds})"><i class="fa fa-eraser" aria-hidden="true"></i></span>
 			</div>
 		`;
 		editor.insertAdjacentHTML("beforeend", timepointHTML);
@@ -800,18 +824,21 @@ function measureLabelClick(measure)
 	createTimepointEditor(measure);
 }
 
-function timepointEditorSave(measureIndex, id)
+function timepointEditorSave(measureIndex, id, oldTimepoint)
 {
+	MusicSync.timepointToMeasure.delete(oldTimepoint);
 	const data = extractTimepointEditorRowData(id);
 	const minutes = data[0];
 	const seconds = data[1];
 	const timepointIndex = data[2];
 	MusicSync.measures[measureIndex].timepoint[timepointIndex] = minutes * 60 + seconds;
+	MusicSync.timepointToMeasure.add(measureIndex, MusicSync.measures[measureIndex].timepoint[timepointIndex]);
 	updateMeasureTimepointLabel(measureIndex);
 }
 
-function timepointEditorDelete(measureIndex, id)
+function timepointEditorDelete(measureIndex, id, oldTimepoint)
 {
+	MusicSync.timepointToMeasure.delete(oldTimepoint);
 	const timepointIndex = deleteTimepointEditorRow(id);
 	MusicSync.measures[measureIndex].timepoint.splice(timepointIndex, 1);
 	updateMeasureTimepointLabel(measureIndex);
