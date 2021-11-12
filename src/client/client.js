@@ -17,10 +17,12 @@ const TIMELINE = "time-line";
 const SHEET_MUSIC_CONTAINER = "osmd-container";
 const LOADING_SIGN = "loading-sign";
 const TIMEPOINT_EDITOR = "timepoint-editor";
+const TIMEPOINT_SELECTOR = "timepoint-selector";
 
 //VexFlow constants
 const UNIT_IN_PIXELS = 10;
 const TIMEPOINT_EDITOR_WIDTH = 510;
+const REPETITION_SELECTOR_WIDTH = 100;
 
 //Application constants and global
 const REPEAT = {
@@ -149,9 +151,14 @@ function measureClickControl(measureIndex)
 	}
 	else
 	{
-		if (0 < measure.timepoint.length)
+		if (1 == measure.timepoint.length)
+		{
+			audioPlayer.currentTime = measure.timepoint[0];
+		}
+		else if (1 < measure.timepoint.length)
 		{
 			audioPlayer.currentTime = measure.timepoint[measure.timepoint.length - 1];
+			createRepetitionSelector(measureIndex);
 		}
 	}
 }
@@ -570,6 +577,33 @@ function createTimepointEditor(measureIndex)
 	svgCanvas.addEventListener("click", deleteTimepointEditor, true);
 }
 
+function createRepetitionSelector(measureIndex)
+{
+	let selector = document.createElement("div");
+	const measureLabelContainer = document.getElementById(`measure-label-${measureIndex}`);
+	const osmdContainer = document.getElementById(SHEET_MUSIC_CONTAINER);
+	const x = Number.parseInt(measureLabelContainer.children[0].getAttributeNode("x").nodeValue) + osmdContainer.getBoundingClientRect().left;
+	const y = Number.parseInt(measureLabelContainer.children[0].getAttributeNode("y").nodeValue) - osmdContainer.scrollTop + osmdContainer.getBoundingClientRect().top;
+	selector.setAttribute("id", TIMEPOINT_SELECTOR);
+	selector.setAttribute("style", `position: absolute; top: ${y}px; left: ${x}px; z-index: 10; background-color: grey; border: 2px solid;`);
+	for (i in MusicSync.measures[measureIndex].timepoint)
+	{
+		let timepointHTML = `
+			<div style="border-width: 0px 1px 1px 0px; border-style: solid; display: inline-block;" id="${TIMEPOINT_SELECTOR}-${i}">
+				<span style="padding: 3px; font-size: xx-large;" onclick="repetitionSelection(${measureIndex}, ${i})">${Number(i) + 1}</span>
+			</div>
+		`;
+		selector.insertAdjacentHTML("beforeend", timepointHTML);
+	}
+	document.body.appendChild(selector);
+	if (osmdContainer.getBoundingClientRect().right < x + REPETITION_SELECTOR_WIDTH)
+	{
+		selector.style.left = `${x - ((x + REPETITION_SELECTOR_WIDTH) - osmdContainer.getBoundingClientRect().right)}px`;
+	}
+	const svgCanvas = document.getElementsByTagName("svg")[0];
+	svgCanvas.addEventListener("click", deleteRepetitionSelector, true);
+}
+
 function deleteTimepointEditor()
 {
 	if (document.getElementById(TIMEPOINT_EDITOR) !== null)
@@ -578,6 +612,16 @@ function deleteTimepointEditor()
 	}
 	const svgCanvas = document.getElementsByTagName("svg")[0];
 	svgCanvas.removeEventListener("click", deleteTimepointEditor);
+}
+
+function deleteRepetitionSelector()
+{
+	if (document.getElementById(TIMEPOINT_SELECTOR) !== null)
+	{
+		document.getElementById(TIMEPOINT_SELECTOR).remove();
+	}
+	const svgCanvas = document.getElementsByTagName("svg")[0];
+	svgCanvas.removeEventListener("click", deleteRepetitionSelector);
 }
 
 function extractTimepointEditorRowData(id)
@@ -773,6 +817,14 @@ function timepointEditorDelete(measureIndex, id)
 	updateMeasureTimepointLabel(measureIndex);
 }
 
+function repetitionSelection(measureIndex, timepointIndex)
+{
+	const timepoint = MusicSync.measures[measureIndex].timepoint[timepointIndex];
+	const audioPlayer = document.getElementById(AUDIO_PLAYER_ID);
+	audioPlayer.currentTime = timepoint;
+	deleteRepetitionSelector();
+}
+
 function save()
 {
 	if (MusicSync.measures.length <= 0)
@@ -796,6 +848,7 @@ function initAll(event)
 function pageResize(event)
 {
 	deleteTimepointEditor();
+	deleteRepetitionSelector();
 	if (MusicSync.osmd !== undefined && MusicSync.osmd.Sheet !== undefined)
 	{
 		MusicSync.osmd.render();
