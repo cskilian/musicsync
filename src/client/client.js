@@ -66,6 +66,8 @@ function initMeasures()
 {
 	MusicSync.measures = [];
 	let repeating = false;
+	let firstRepeatStart = undefined;
+	let firstRepeatEnd = undefined;
 	for (let i = 0; i < MusicSync.osmd.GraphicSheet.measureList.length; ++i)
 	{
 		let musicSyncMeasure = null;
@@ -74,7 +76,8 @@ function initMeasures()
 			continue;
 		}
 		let measure = MusicSync.osmd.GraphicSheet.measureList[i][0].parentSourceMeasure;
-		if (0 < measure.lastRepetitionInstructions.length && 0 < measure.firstRepetitionInstructions.length)
+		if ((0 < measure.lastRepetitionInstructions.length && 0 < measure.firstRepetitionInstructions.length) ||
+			(0 < measure.firstRepetitionInstructions.length && measure.firstRepetitionInstructions[0].type == 3))
 		{
 			musicSyncMeasure = new Measure(REPEAT.gate);
 			repeating = false;
@@ -83,11 +86,19 @@ function initMeasures()
 		{
 			musicSyncMeasure = new Measure(REPEAT.end);
 			repeating = false;
+			if (firstRepeatEnd == undefined)	//this is to keep track of the first repeat sign, we have to do another pass to get the repetitions correct
+			{
+				firstRepeatEnd = i;
+			}
 		}
 		else if (0 < measure.firstRepetitionInstructions.length)
 		{
 			musicSyncMeasure = new Measure(REPEAT.start);
 			repeating = true;
+			if (firstRepeatStart == undefined)
+			{
+				firstRepeatStart = i;
+			}
 		}
 		else if (repeating)
 		{
@@ -98,6 +109,16 @@ function initMeasures()
 			musicSyncMeasure = new Measure(REPEAT.off);
 		}
 		MusicSync.measures.push(musicSyncMeasure);
+	}
+	if (firstRepeatEnd < firstRepeatStart)
+	{
+		for (i = firstRepeatEnd; 0 <= i; --i)
+		{
+			if (MusicSync.measures[i].repeat == REPEAT.off)
+			{
+				MusicSync.measures[i].repeat = REPEAT.on;
+			}
+		}
 	}
 	MusicSync.measures[0].timepoint.push(0);	//assign audio beginning to 1st measure just in case
 }
