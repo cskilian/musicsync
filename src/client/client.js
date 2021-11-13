@@ -46,6 +46,9 @@ var MusicSync = {
 	recordingClickCounts: undefined, //this is an object for recording the number of times we click on a measure during manual sync, it is cleared when manual sync stops
 	measures: [],                    //this holds the Measure object containing synced timepoints and repetition information
 	timepointToMeasure: undefined,   //this holds mapping from timepoint to measure
+	timepointIterator: undefined, //this holds an iterator for timepoints in timepointToMeasure mapping
+	nextTimepoint: undefined,
+	previousTimepoint: undefined,
 };
 
 /* ====================================================================================
@@ -172,12 +175,27 @@ function measureClickControl(measureIndex)
 	{
 		if (1 == measure.timepoint.length)
 		{
-			audioPlayer.currentTime = measure.timepoint[0];
+			changeAudioPlayerPositionControl(measure.timepoint[0]);
 		}
 		else if (1 < measure.timepoint.length)
 		{
-			audioPlayer.currentTime = measure.timepoint[measure.timepoint.length - 1];
+			changeAudioPlayerPositionControl(measure.timepoint[measure.timepoint.length - 1]);
 			createRepetitionSelector(measureIndex);
+		}
+	}
+}
+
+function changeAudioPlayerPositionControl(timepoint)
+{
+	const audioPlayer = document.getElementById(AUDIO_PLAYER_ID);
+	audioPlayer.currentTime = timepoint;
+	if (MusicSync.timepointToMeasure !== undefined)
+	{
+		MusicSync.timepointIterator = MusicSync.timepointToMeasure.keys();
+		MusicSync.nextTimepoint = MusicSync.timepointIterator.next().value;
+		while (MusicSync.nextTimepoint !== undefined && MusicSync.nextTimepoint <= audioPlayer.currentTime)
+		{
+			MusicSync.nextTimepoint = MusicSync.timepointIterator.next().value;
 		}
 	}
 }
@@ -286,7 +304,7 @@ function stopAudioControl()
 {
 	const audioPlayer = document.getElementById(AUDIO_PLAYER_ID);
 	audioPlayer.pause();
-	audioPlayer.currentTime = 0;
+	changeAudioPlayerPositionControl(0);
 }
 
 function manualSyncControl()
@@ -348,7 +366,7 @@ function changeAudioPlayerPosition(event)
 	const audioPlayer = document.getElementById(AUDIO_PLAYER_ID);
  	const timeline = document.getElementById(TIMELINE);
  	const timelineWidth = timeline.offsetWidth - seeker.offsetWidth;
-  	audioPlayer.currentTime = audioPlayer.duration * (event.clientX - timeline.getBoundingClientRect().left) / timelineWidth;
+  	changeAudioPlayerPositionControl(audioPlayer.duration * (event.clientX - timeline.getBoundingClientRect().left) / timelineWidth);
 }
 
 function measuresToJSON()
@@ -363,6 +381,17 @@ function resetInput(inputId)
 	const input = document.getElementById(inputId);
 	input.value = "";
 }
+
+function clearCurrentMeasure()
+{
+	let timepoints = []
+	timepoints.push(MusicSync.nextTimepoint);
+	timepoints.push(MusicSync.previousTimepoint);
+	MusicSync.nextTimepoint = undefined;
+	MusicSync.previousTimepoint = undefined;
+	return timepoints;
+}
+
 /* =====================================================================================
  * View (User Interface)
  * =====================================================================================
@@ -409,6 +438,30 @@ function timeUpdate(duration)
  		else
  		{
  			seeker.style.maginLeft = timelineWidth + "px";
+ 		}
+ 		if (MusicSync.nextTimepoint !== undefined && MusicSync.nextTimepoint <= audioPlayer.currentTime)
+ 		{
+ 			const currentMeasure = MusicSync.timepointToMeasure.get(MusicSync.nextTimepoint);
+ 			const currentMeasureBoxes = document.getElementsByClassName(`measure-box-${currentMeasure}`);
+ 			for (let i = 0; i < currentMeasureBoxes.length; ++i)
+ 			{
+ 				const currentMeasureBox = currentMeasureBoxes[i];
+ 				currentMeasureBox.style.fill = "green";
+ 				currentMeasureBox.style.opacity = 0.3;
+ 			}
+  			if (MusicSync.previousTimepoint !== undefined)
+ 			{
+ 				const previousMeasure = MusicSync.timepointToMeasure.get(MusicSync.previousTimepoint);
+ 				const previousMeasureBoxes = document.getElementsByClassName(`measure-box-${previousMeasure}`);
+ 				for (let i = 0; i < previousMeasureBoxes.length; ++i)
+ 				{
+ 					const previousMeasureBox = previousMeasureBoxes[i];
+ 					previousMeasureBox.style.fill = null;
+ 					previousMeasureBox.style.opacity = 0;
+ 				}
+ 			}
+ 			MusicSync.previousTimepoint = MusicSync.nextTimepoint;
+ 			MusicSync.nextTimepoint = MusicSync.timepointIterator.next().value;
  		}
  	}
  	return timeUpdateFn;
@@ -506,7 +559,7 @@ function createClickBoundingBoxes()
 			boundingBox.setAttribute("height", height);
 			boundingBox.setAttribute("style", "pointer-events: bounding-box; opacity: 0;");
 			boundingBox.setAttribute("onclick", `measureClick(${bar})`);
-			boundingBox.setAttribute("id", `measure-box-${bar}`);
+			boundingBox.setAttribute("class", `measure-box-${bar}`);
 			svgCanvas.appendChild(boundingBox);
 		}
 	}
@@ -635,7 +688,10 @@ function deleteTimepointEditor()
 		document.getElementById(TIMEPOINT_EDITOR).remove();
 	}
 	const svgCanvas = document.getElementsByTagName("svg")[0];
-	svgCanvas.removeEventListener("click", deleteTimepointEditor);
+	if (svgCanvas !== undefined)
+	{
+		svgCanvas.removeEventListener("click", deleteTimepointEditor);
+	}
 }
 
 function deleteRepetitionSelector()
@@ -645,7 +701,10 @@ function deleteRepetitionSelector()
 		document.getElementById(TIMEPOINT_SELECTOR).remove();
 	}
 	const svgCanvas = document.getElementsByTagName("svg")[0];
-	svgCanvas.removeEventListener("click", deleteRepetitionSelector);
+	if (svgCanvas !== undefined)
+	{
+		svgCanvas.removeEventListener("click", deleteRepetitionSelector);
+	}
 }
 
 function extractTimepointEditorRowData(id)
@@ -693,6 +752,24 @@ function deleteTimepointEditorRow(id)
 		deleteTimepointEditor();
 	}
 	return timepointIndex;
+}
+
+function endMeasureHighlight(timepoints)
+{
+	for (timepoint in timepoints)
+	{
+		if (timepoints[timepoint] !== undefined && MusicSync.timepointToMeasure !== undefined)
+		{
+			const measure = MusicSync.timepointToMeasure.get(timepoints[timepoint]);
+ 			const measureBoxes = document.getElementsByClassName(`measure-box-${measure}`);
+ 			for (let i = 0; i < measureBoxes.length; ++i)
+ 			{
+ 				const measureBox = measureBoxes[i];
+ 				measureBox.style.fill = null;
+ 				measureBox.style.opacity = 0;
+ 			}
+ 		}
+	}
 }
 
 /* =======================================================================================
@@ -759,6 +836,7 @@ function playPauseAudio()
 
 function stopAudio()
 {
+	endMeasureHighlight(clearCurrentMeasure());
 	stopAudioControl();
 	stopManualSync();
 	updatePlayPauseButton();
@@ -767,6 +845,7 @@ function stopAudio()
 
 function resetAudio()
 {
+	endMeasureHighlight(clearCurrentMeasure());
 	stopAudioControl();
 	stopManualSync();
 	updatePlayPauseButton();
@@ -847,8 +926,7 @@ function timepointEditorDelete(measureIndex, id, oldTimepoint)
 function repetitionSelection(measureIndex, timepointIndex)
 {
 	const timepoint = MusicSync.measures[measureIndex].timepoint[timepointIndex];
-	const audioPlayer = document.getElementById(AUDIO_PLAYER_ID);
-	audioPlayer.currentTime = timepoint;
+	changeAudioPlayerPositionControl(timepoint);
 	deleteRepetitionSelector();
 }
 
