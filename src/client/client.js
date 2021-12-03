@@ -12,6 +12,7 @@ const SYNC_FILE_INPUT = "sync";
 const AUDIO_PLAYER_ID = "audio-player";
 const PLAY_PAUSE_BUTTON = "play-pause-button";
 const MANUAL_SYNC_BUTTON = "manual-sync-button";
+const AUTO_SYNC_BUTTON = "auto-sync-button";
 const TIMELINE_SEEKER = "seeker";
 const TIMELINE = "time-line";
 const SHEET_MUSIC_CONTAINER = "osmd-container";
@@ -33,6 +34,8 @@ const REPEAT = {
 	gate: 4,
 };
 
+const SYNC_COMPLETE = 4;
+
 class Measure {
 	constructor(repeat) {
 		this.timepoint = [];
@@ -49,6 +52,9 @@ var MusicSync = {
 	timepointIterator: undefined, //this holds an iterator for timepoints in timepointToMeasure mapping
 	nextTimepoint: undefined,
 	previousTimepoint: undefined,
+	scoreFileData: undefined,
+	isSyncing: false,
+	syncId: undefined,
 };
 
 /* ====================================================================================
@@ -202,7 +208,7 @@ function changeAudioPlayerPositionControl(timepoint)
 
 function changeScore(file)
 {
-	var fileReader = new FileReader();
+	let fileReader = new FileReader();
 	fileReader.onload = (event) => {
 		MusicSync.osmd.load(event.target.result).then(() => {
 			initMeasures();
@@ -212,13 +218,19 @@ function changeScore(file)
 			endLoadingSign();
 		});
 	};
+	let fileReader2 = new FileReader();
+	fileReader2.onload = (event) => {
+		MusicSync.scoreFileData = event.target.result;
+	};
 	if (file.name.toLowerCase().endsWith(".xml") || file.name.toLowerCase().endsWith(".musicxml"))
 	{
 		fileReader.readAsText(file);
+		fileReader2.readAsDataURL(file);
 	}
 	else if (file.name.toLowerCase().endsWith(".mxl"))
 	{
 		fileReader.readAsBinaryString(file);
+		fileReader2.readAsDataURL(file);
 	}
 	else
 	{
@@ -327,6 +339,18 @@ function stopManualSync()
 	MusicSync.isRecording = false;
 }
 
+function stopAutoSync()
+{
+	MusicSync.isSyncing = false;
+	if (MusicSync.syncId !== undefined)
+	{
+		let xhr = new XMLHttpRequest();
+		xhr.open("DELETE", `/autosync/${MusicSync.syncId}`, true);
+		xhr.send();
+	}
+	MusicSync.syncId = undefined;
+}
+
 function changeAudioPlayerSource(file)
 {
 	stopAudioControl()
@@ -391,6 +415,84 @@ function clearCurrentMeasure()
 	MusicSync.previousTimepoint = undefined;
 	return timepoints;
 }
+
+function autoSyncSendAudio(id)
+{
+	let audioPlayer = document.getElementById(AUDIO_PLAYER_ID);
+	let xhr = new XMLHttpRequest();
+	xhr.open("POST", `/autosync/${id}/audio`, true);
+	xhr.send(audioPlayer.src);
+}
+
+function autoSyncSendScore(id)
+{
+	let xhr = new XMLHttpRequest();
+	xhr.open("POST", `/autosync/${id}/score`, true);
+	xhr.send(MusicSync.scoreFileData);
+}
+
+function autoSyncStartSync(id)
+{
+	let xhr = new XMLHttpRequest();
+	xhr.open("PUT", `/autosync/${id}`, true);
+	xhr.send();
+}
+
+function waitWhileAutoSyncing(id)
+{
+	let xhr = new XMLHttpRequest();
+	xhr.onreadystatechange = () => {
+		if (xhr.readyState == 4 && xhr.status == 200)
+		{
+			let status = JSON.parse(xhr.responseText).status;
+			if (status == SYNC_COMPLETE || !MusicSync.isSyncing)
+			{
+				return;
+			}
+			else
+			{
+				setTimeout(waitWhileAutoSyncing, 2000, id);
+			}
+		}
+	};
+	xhr.open("GET", `/autosync/${id}`, true);
+	xhr.setRequestHeader("Content-Type", "application/json");
+	xhr.send();
+}
+
+function getSyncInfo(id)
+{
+
+}
+
+function autoSyncControl()
+{
+	MusicSync.isSyncing = !MusicSync.isSyncing;
+	if (MusicSync.isSyncing)
+	{
+		let xhr = new XMLHttpRequest();
+		xhr.onreadystatechange = () => {
+			if (xhr.readyState == 4 && xhr.status == 200)
+			{
+				let id = JSON.parse(xhr.responseText).id;
+				MusicSync.syncId = id;
+				autoSyncSendAudio(MusicSync.syncId);
+				autoSyncSendScore(MusicSync.syncId);
+				autoSyncStartSync(MusicSync.syncId);
+				waitWhileAutoSyncing(MusicSync.syncId);
+				getSyncInfo(MusicSync.syncId);
+			}
+		};
+		xhr.open("POST", "/autosync", true);
+		xhr.setRequestHeader("Content-Type", "application/json");
+		xhr.send();
+	}
+	else
+	{
+		stopAutoSync();
+	}
+}
+
 
 /* =====================================================================================
  * View (User Interface)
@@ -491,6 +593,19 @@ function updateManualSyncButton()
 	if (MusicSync.isRecording)
 	{
 		button.style.backgroundColor = "red";
+	}
+	else
+	{
+		button.style.backgroundColor = null;
+	}
+}
+
+function updateAutoSyncButton()
+{
+	const button = document.getElementById(AUTO_SYNC_BUTTON);
+	if (MusicSync.isSyncing)
+	{
+		button.style.backgroundColor = "orange";
 	}
 	else
 	{
@@ -860,10 +975,26 @@ function manualSync()
 		error("You need to load an audio file and MusicXML score before synchronising", true);
 		return;
 	}
+	stopAutoSync();
 	manualSyncControl();
+	updateAutoSyncButton();
 	updateManualSyncButton();
 	updatePlayPauseButton();
 }
+
+function autoSync()
+{
+	const audioPlayer = document.getElementById(AUDIO_PLAYER_ID);
+	if (audioPlayer.src == "" || MusicSync.scoreFileData == undefined)
+	{
+		error("You need to load an audio file and MusicXML score before synchronising", true);
+		return;
+	}
+	autoSyncControl();
+	updateAutoSyncButton();
+}
+
+
 /* 
  * Event handler for clicking on the timeline
  */
