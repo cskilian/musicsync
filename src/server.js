@@ -27,17 +27,26 @@ app.use('/', express.static(path.join(__dirname, CLIENT_DIR)));
 
 
 app.post('/autosync/:id/audio', (request, response) => {
-	let fstream = fs.createWriteStream(path.join(APP_DATA_PREFIX, '/', request.params.id, '/audio'));
-	fstream.on('finish', (error) => {
-		response.status(200);
-		response.send();
+	let data = '';
+	request.on('data', (chunk) => {
+		data += chunk;
 	});
-	fstream.on('error', (error) => {
-		console.log(error);
-		response.status(500);
-		response.send();
+	request.on('end', () => {
+		let stripped = data.split('base64,')[1];
+		let buffer = Buffer.from(stripped, 'base64');
+		fs.writeFile(path.join(APP_DATA_PREFIX, '/', request.params.id, '/audio'), buffer, (error) => {
+			if (error)
+			{
+				response.status(500);
+				response.send();
+			}
+			else
+			{
+				response.status(200);
+				response.send();
+			}
+		});	
 	});
-	request.pipe(fstream);
 });
 
 
