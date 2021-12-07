@@ -217,20 +217,21 @@ function changeScore(file)
 			createClickBoundingBoxes();
 			endLoadingSign();
 		});
-	};
-	let fileReader2 = new FileReader();
-	fileReader2.onload = (event) => {
-		MusicSync.scoreFileData = event.target.result;
+		let fileArrayBuffer = new ArrayBuffer(event.target.result.length);
+		let writer = new Uint8Array(fileArrayBuffer);
+		for (var i = 0, len = event.target.result.length; i < len; ++i)
+		{
+			writer[i] = event.target.result.charCodeAt(i);
+		}
+		MusicSync.scoreFileData = fileArrayBuffer;
 	};
 	if (file.name.toLowerCase().endsWith(".xml") || file.name.toLowerCase().endsWith(".musicxml"))
 	{
 		fileReader.readAsText(file);
-		fileReader2.readAsDataURL(file);
 	}
 	else if (file.name.toLowerCase().endsWith(".mxl"))
 	{
 		fileReader.readAsBinaryString(file);
-		fileReader2.readAsDataURL(file);
 	}
 	else
 	{
