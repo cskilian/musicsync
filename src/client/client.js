@@ -435,7 +435,7 @@ function autoSyncSendScore(id)
 function autoSyncStartSync(id)
 {
 	let xhr = new XMLHttpRequest();
-	xhr.open("PUT", `/autosync/${id}`, true);
+	xhr.open("POST", `/autosync/${id}/sync`, true);
 	xhr.send();
 }
 

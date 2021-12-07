@@ -1,9 +1,10 @@
 const express = require('express');
+const config = require('./config.js');
 const path = require('path');
 const fs = require('fs');
 const uuid = require('uuid');
+var spawn = require('child_process').spawn;
 const app = express();
-const port = 3000;
 
 const CLIENT_DIR = 'client';
 const APP_DATA_DIR = '.musicsync';
@@ -68,8 +69,44 @@ app.get('/autosync/:id/sync', (request, response) => {
 
 });
 
-app.put('/autosync/:id', (request, response) => {
-
+app.post('/autosync/:id/sync', (request, response) => {
+	const scorePath = path.join(APP_DATA_PREFIX, '/', request.params.id, '/score');
+	const audioPath = path.join(APP_DATA_PREFIX, '/', request.params.id, '/audio');
+	const pidPath = path.join(APP_DATA_PREFIX, '/', request.params.id, '/pid');
+	const syncPath = path.join(APP_DATA_PREFIX, '/', request.params.id, '/sync');
+	fs.exists(audioPath, (exists) => {
+		if (exists)
+		{
+			fs.exists(scorePath, (exists) => {
+				if (exists)
+				{
+					let child = spawn('python3', ['auto_sync.py', audioPath, scorePath, syncPath]);
+					child.on('spawn', () => {
+						fs.writeFile(pidPath, child.pid, (error) => {});
+						response.status(200);
+						response.send();
+					});
+					child.on('error', (error) => {
+						response.status(500);
+						response.send();
+					});
+					child.on('exit', (code, signal) => {
+						fs.unlink(pidPath, (error) => {});
+					});
+				}
+				else
+				{
+					response.status(404);
+					response.send();
+				}
+			});
+		}
+		else
+		{
+			response.status(404);
+			response.send();
+		}
+	});
 });
 
 app.get('/autosync/:id', (request, response) => {
@@ -149,8 +186,8 @@ app.get('/', (request, response) => {
 });
 
 
-app.listen(port, () => {
-	console.log(`Example app listening at port ${port}`);
+app.listen(config.PORT, config.HOST, () => {
+	console.log(`Example app listening at http://${config.HOST}:${config.PORT}`);
 });
 
 module.exports = app;
