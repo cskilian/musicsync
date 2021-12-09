@@ -35,6 +35,7 @@ const REPEAT = {
 };
 
 const SYNC_COMPLETE = 4;
+const READY_TO_SYNC = 2;
 
 class Measure {
 	constructor(repeat) {
@@ -439,6 +440,28 @@ function autoSyncStartSync(id)
 	xhr.send();
 }
 
+function waitWhileUploadCompletes(id)
+{
+	let xhr = new XMLHttpRequest();
+	xhr.onreadystatechange = () => {
+		if (xhr.readyState == 4 && xhr.status == 200)
+		{
+			let status = JSON.parse(xhr.responseText).status;
+			if (READY_TO_SYNC <= status)
+			{
+				return;
+			}
+			else
+			{
+				setTimeout(waitWhileUploadCompletes, 2000, id);
+			}
+		}
+	};
+	xhr.open("GET", `/autosync/${id}`, true);
+	xhr.setRequestHeader("Content-Type", "application/json");
+	xhr.send();
+}
+
 function waitWhileAutoSyncing(id)
 {
 	let xhr = new XMLHttpRequest();
@@ -463,7 +486,7 @@ function waitWhileAutoSyncing(id)
 
 function getSyncInfo(id)
 {
-
+	console.log("CALL RESULTS");
 }
 
 function autoSyncControl()
@@ -479,9 +502,12 @@ function autoSyncControl()
 				MusicSync.syncId = id;
 				autoSyncSendAudio(MusicSync.syncId);
 				autoSyncSendScore(MusicSync.syncId);
+				waitWhileUploadCompletes(MusicSync.syncId);
 				autoSyncStartSync(MusicSync.syncId);
 				waitWhileAutoSyncing(MusicSync.syncId);
 				getSyncInfo(MusicSync.syncId);
+				MusicSync.isSyncing = false;
+				updateAutoSyncButton();
 			}
 		};
 		xhr.open("POST", "/autosync", true);

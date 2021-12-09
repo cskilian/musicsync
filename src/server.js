@@ -7,7 +7,7 @@ var spawn = require('child_process').spawn;
 const app = express();
 
 const CLIENT_DIR = 'client';
-const APP_DATA_DIR = '.musicsync';
+const APP_DATA_DIR = config.APP_DATA_DIR;
 let APP_DATA_PREFIX = path.join(process.env.HOME, APP_DATA_DIR);
 
 const AUTO_SYNC_STATUS = {
@@ -80,7 +80,7 @@ app.post('/autosync/:id/sync', (request, response) => {
 			fs.exists(scorePath, (exists) => {
 				if (exists)
 				{
-					let child = spawn('python3', ['auto_sync.py', audioPath, scorePath, syncPath]);
+					let child = spawn(config.PYTHON, ['auto_sync.py', audioPath, scorePath, syncPath]);
 					child.on('spawn', () => {
 						fs.writeFile(pidPath, child.pid, (error) => {});
 						response.status(200);
