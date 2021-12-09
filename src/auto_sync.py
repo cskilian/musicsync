@@ -10,6 +10,10 @@ TMP_MIDI = "score.midi"
 SAMPLE_RATE = 22050
 WINDOW_LENGTH = 4410
 HOP_SIZE = 2205
+DEFAULT_BPM = 120
+
+def frame_to_seconds(frame, hop_size, sample_rate):
+    return (frame * hop_size) / sample_rate
 
 def audio_file_to_wave(audio_file_path):
     try:
@@ -27,13 +31,21 @@ def score_file_to_score(score_file_path):
     os.rename(score_file_path, score_file_path + file_type_extension)
     source = music21.converter.parse(score_file_path + file_type_extension)
     source_unrolled = source.expandRepeats()
-    source_unrolled.write("midi", TMP_MIDI)
     os.rename(score_file_path + file_type_extension, score_file_path)
     return source, source_unrolled
+
+def strip_metronome_markings(stream):
+    boundaries = stream.metronomeMarkBoundaries()
+    for i in boundaries:
+        stream.remove(i[2], recurse = True)
 
 def main(audio_file_path, score_file_path, sync_file_path):
     audio_wave, sample_rate = audio_file_to_wave(audio_file_path)
     source, source_unrolled = score_file_to_score(score_file_path)
+    strip_metronome_markings(source)
+    strip_metronome_markings(source_unrolled)
+    source_unrolled.write("midi", TMP_MIDI)
+    pdb.set_trace()
     score_wave, sample_rate = librosa.load(TMP_MIDI, sr = SAMPLE_RATE)
     audio_chroma = librosa.feature.chroma_stft(y = audio_wave, sr = SAMPLE_RATE, tuning = 0, norm = 2, hop_length = HOP_SIZE, n_fft = WINDOW_LENGTH)
     score_chroma = librosa.feature.chroma_stft(y = score_wave, sr = SAMPLE_RATE, tuning = 0, norm = 2, hop_length = HOP_SIZE, n_fft = WINDOW_LENGTH)
