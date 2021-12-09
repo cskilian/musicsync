@@ -2,10 +2,19 @@
 This application allows a musician to sync a MusicXML score and an audio file.
 
 ## Installing and Running the Application
+Prerequisites:
+- node.js
+- npm
+- python 3.7+
+- PyPI (pip)
+- ffmpeg (on Linux only)
+
+You need the above installed and add it to your $PATH
+
 Run the following in the app directory to install dependencies:
 ```
 npm install
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 ```
 To run the application:
 ```
