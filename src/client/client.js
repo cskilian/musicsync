@@ -35,6 +35,7 @@ const REPEAT = {
 };
 
 const SYNC_COMPLETE = 4;
+const SYNC_FAILED = 5;
 const READY_TO_SYNC = 2;
 
 class Measure {
@@ -440,48 +441,74 @@ function autoSyncStartSync(id)
 	xhr.send();
 }
 
-function waitWhileUploadCompletes(id)
+function isUploadComplete(id)
 {
-	let xhr = new XMLHttpRequest();
-	xhr.onreadystatechange = () => {
-		if (xhr.readyState == 4 && xhr.status == 200)
-		{
-			let status = JSON.parse(xhr.responseText).status;
-			if (READY_TO_SYNC <= status)
+	return new Promise(resolve => {
+		let xhr = new XMLHttpRequest();
+		xhr.onreadystatechange = () => {
+			if (xhr.readyState == 4 && xhr.status == 200)
 			{
-				return;
+				let status = JSON.parse(xhr.responseText).status;
+				if (READY_TO_SYNC <= status)
+				{
+					resolve(true);
+				}
+				else
+				{
+					resolve(false);
+				}
 			}
-			else
-			{
-				setTimeout(waitWhileUploadCompletes, 2000, id);
-			}
-		}
-	};
-	xhr.open("GET", `/autosync/${id}`, true);
-	xhr.setRequestHeader("Content-Type", "application/json");
-	xhr.send();
+		};
+		xhr.onerror = () => {
+			reject(xhr.status);
+		};
+		xhr.open("GET", `/autosync/${id}`, true);
+		xhr.setRequestHeader("Content-Type", "application/json");
+		xhr.send();	
+	});
 }
 
-function waitWhileAutoSyncing(id)
+async function waitWhileUploadCompletes(id)
 {
-	let xhr = new XMLHttpRequest();
-	xhr.onreadystatechange = () => {
-		if (xhr.readyState == 4 && xhr.status == 200)
-		{
-			let status = JSON.parse(xhr.responseText).status;
-			if (status == SYNC_COMPLETE || !MusicSync.isSyncing)
+	while (!(await isUploadComplete(id)))
+	{
+		await new Promise(resolve => setTimeout(resolve, 2000));
+	}
+}
+
+function isAutoSyncFinished(id)
+{
+	return new Promise(resolve => {
+		let xhr = new XMLHttpRequest();
+		xhr.onreadystatechange = () => {
+			if (xhr.readyState == 4 && xhr.status == 200)
 			{
-				return;
+				let status = JSON.parse(xhr.responseText).status;
+				if (status == SYNC_COMPLETE || status == SYNC_FAILED || !MusicSync.isSyncing)
+				{
+					resolve(true);
+				}
+				else
+				{
+					resolve(false);
+				}
 			}
-			else
-			{
-				setTimeout(waitWhileAutoSyncing, 2000, id);
-			}
-		}
-	};
-	xhr.open("GET", `/autosync/${id}`, true);
-	xhr.setRequestHeader("Content-Type", "application/json");
-	xhr.send();
+		};
+		xhr.onerror = () => {
+			reject(xhr.status);
+		};
+		xhr.open("GET", `/autosync/${id}`, true);
+		xhr.setRequestHeader("Content-Type", "application/json");
+		xhr.send();
+	});
+}
+
+async function waitWhileAutoSyncing(id)
+{
+	while (!(await isAutoSyncFinished(id)))
+	{
+		await new Promise(resolve => setTimeout(resolve, 2000));
+	}
 }
 
 function getSyncInfo(id)
@@ -489,30 +516,41 @@ function getSyncInfo(id)
 	console.log("CALL RESULTS");
 }
 
-function autoSyncControl()
+async function initAutoSyncRequest()
 {
-	MusicSync.isSyncing = !MusicSync.isSyncing;
-	if (MusicSync.isSyncing)
-	{
+	return new Promise(resolve => {
 		let xhr = new XMLHttpRequest();
 		xhr.onreadystatechange = () => {
 			if (xhr.readyState == 4 && xhr.status == 200)
 			{
 				let id = JSON.parse(xhr.responseText).id;
-				MusicSync.syncId = id;
-				autoSyncSendAudio(MusicSync.syncId);
-				autoSyncSendScore(MusicSync.syncId);
-				waitWhileUploadCompletes(MusicSync.syncId);
-				autoSyncStartSync(MusicSync.syncId);
-				waitWhileAutoSyncing(MusicSync.syncId);
-				getSyncInfo(MusicSync.syncId);
-				MusicSync.isSyncing = false;
-				updateAutoSyncButton();
+				resolve(id);
 			}
 		};
+		xhr.onerror = () => {
+			reject(xhr.status);
+		}
 		xhr.open("POST", "/autosync", true);
 		xhr.setRequestHeader("Content-Type", "application/json");
 		xhr.send();
+	});
+}
+
+async function autoSyncControl()
+{
+	MusicSync.isSyncing = !MusicSync.isSyncing;
+	if (MusicSync.isSyncing)
+	{
+		let id = await initAutoSyncRequest();
+		MusicSync.syncId = id;
+		autoSyncSendAudio(MusicSync.syncId);
+		autoSyncSendScore(MusicSync.syncId);
+		await waitWhileUploadCompletes(MusicSync.syncId);
+		autoSyncStartSync(MusicSync.syncId);
+		await waitWhileAutoSyncing(MusicSync.syncId);
+		getSyncInfo(MusicSync.syncId);
+		MusicSync.isSyncing = false;
+		updateAutoSyncButton();
 	}
 	else
 	{

@@ -16,6 +16,7 @@ const AUTO_SYNC_STATUS = {
 	READY_TO_SYNC: 2,
 	STILL_SYNCING: 3,
 	SYNC_COMPLETE: 4,
+	SYNC_FAILED: 5,
 };
 
 /* =======================================================================
@@ -83,16 +84,15 @@ app.post('/autosync/:id/sync', (request, response) => {
 					let child = spawn(config.PYTHON, ['auto_sync.py', audioPath, scorePath, syncPath]);
 					child.on('spawn', () => {
 						fs.writeFile(pidPath, child.pid, (error) => {});
-						response.status(200);
-						response.send();
 					});
 					child.on('error', (error) => {
-						response.status(500);
-						response.send();
+						fs.writeFile(pidPath, '1', (error) => {});
 					});
 					child.on('exit', (code, signal) => {
-						fs.unlink(pidPath, (error) => {});
+						fs.writeFile(pidPath, code.toString(), (error) => {});
 					});
+					response.status(200);
+					response.send();
 				}
 				else
 				{
@@ -124,10 +124,15 @@ app.get('/autosync/:id', (request, response) => {
 					fs.exists(syncPath, (exists) => {
 						if (exists)
 						{
-							fs.exists(pidPath, (exists) => {
-								if (!exists)
+							fs.readFile(pidPath, (error, data) => {
+								console.log(data)
+								if (data == "0")
 								{
 									response.send(JSON.stringify({ status: AUTO_SYNC_STATUS.SYNC_COMPLETE}));
+								}
+								else if (data == "1")
+								{
+									response.send(JSON.stringify({ status: AUTO_SYNC_STATUS.SYNC_FAILED}));
 								}
 								else
 								{
