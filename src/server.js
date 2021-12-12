@@ -125,7 +125,6 @@ app.get('/autosync/:id', (request, response) => {
 						if (exists)
 						{
 							fs.readFile(pidPath, (error, data) => {
-								console.log(data)
 								if (data == "0")
 								{
 									response.send(JSON.stringify({ status: AUTO_SYNC_STATUS.SYNC_COMPLETE}));

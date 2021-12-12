@@ -441,7 +441,7 @@ function autoSyncStartSync(id)
 	xhr.send();
 }
 
-function isUploadComplete(id)
+function getAutoSyncStatus(id)
 {
 	return new Promise(resolve => {
 		let xhr = new XMLHttpRequest();
@@ -449,14 +449,7 @@ function isUploadComplete(id)
 			if (xhr.readyState == 4 && xhr.status == 200)
 			{
 				let status = JSON.parse(xhr.responseText).status;
-				if (READY_TO_SYNC <= status)
-				{
-					resolve(true);
-				}
-				else
-				{
-					resolve(false);
-				}
+				resolve(status);
 			}
 		};
 		xhr.onerror = () => {
@@ -470,45 +463,19 @@ function isUploadComplete(id)
 
 async function waitWhileUploadCompletes(id)
 {
-	while (!(await isUploadComplete(id)))
+	while (MusicSync.isSyncing && (await getAutoSyncStatus) < READY_TO_SYNC)
 	{
-		await new Promise(resolve => setTimeout(resolve, 2000));
+		await new Promise(resolve => setTimeout(resolve, 1000));
 	}
-}
-
-function isAutoSyncFinished(id)
-{
-	return new Promise(resolve => {
-		let xhr = new XMLHttpRequest();
-		xhr.onreadystatechange = () => {
-			if (xhr.readyState == 4 && xhr.status == 200)
-			{
-				let status = JSON.parse(xhr.responseText).status;
-				if (status == SYNC_COMPLETE || status == SYNC_FAILED || !MusicSync.isSyncing)
-				{
-					resolve(true);
-				}
-				else
-				{
-					resolve(false);
-				}
-			}
-		};
-		xhr.onerror = () => {
-			reject(xhr.status);
-		};
-		xhr.open("GET", `/autosync/${id}`, true);
-		xhr.setRequestHeader("Content-Type", "application/json");
-		xhr.send();
-	});
 }
 
 async function waitWhileAutoSyncing(id)
 {
-	while (!(await isAutoSyncFinished(id)))
+	while (MusicSync.isSyncing && (await getAutoSyncStatus(id)) < SYNC_COMPLETE)
 	{
-		await new Promise(resolve => setTimeout(resolve, 2000));
+		await new Promise(resolve => setTimeout(resolve, 1000));
 	}
+	return (await getAutoSyncStatus(id))
 }
 
 function getSyncInfo(id)
@@ -547,7 +514,7 @@ async function autoSyncControl()
 		autoSyncSendScore(MusicSync.syncId);
 		await waitWhileUploadCompletes(MusicSync.syncId);
 		autoSyncStartSync(MusicSync.syncId);
-		await waitWhileAutoSyncing(MusicSync.syncId);
+		let status = await waitWhileAutoSyncing(MusicSync.syncId);
 		getSyncInfo(MusicSync.syncId);
 		MusicSync.isSyncing = false;
 		updateAutoSyncButton();
