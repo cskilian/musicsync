@@ -478,9 +478,25 @@ async function waitWhileAutoSyncing(id)
 	return (await getAutoSyncStatus(id))
 }
 
-function getSyncInfo(id)
+async function getSyncInfo(id)
 {
-	console.log("CALL RESULTS");
+	return new Promise(resolve => {
+		let xhr = new XMLHttpRequest();
+		xhr.onreadystatechange = () => {
+			if (xhr.readyState == 4 && xhr.status == 200)
+			{
+				console.log(xhr.responseText);
+				let syncData = JSON.parse(xhr.responseText);
+				resolve(syncData);
+			}
+		};
+		xhr.onerror = () => {
+			reject(xhr.status);
+		};
+		xhr.open("GET", `/autosync/${id}/sync`, true);
+		xhr.setRequestHeader("Content-Type", "application/json");
+		xhr.send();
+	});
 }
 
 async function initAutoSyncRequest()
@@ -496,11 +512,18 @@ async function initAutoSyncRequest()
 		};
 		xhr.onerror = () => {
 			reject(xhr.status);
-		}
+		};
 		xhr.open("POST", "/autosync", true);
 		xhr.setRequestHeader("Content-Type", "application/json");
 		xhr.send();
 	});
+}
+
+function autoSyncControlError(error)
+{
+	error(`Autosynchronisation failed due to communication breakdown: ${error}`, true);
+	stopAutoSync();
+	updateAutoSyncButton();
 }
 
 async function autoSyncControl()
@@ -508,15 +531,25 @@ async function autoSyncControl()
 	MusicSync.isSyncing = !MusicSync.isSyncing;
 	if (MusicSync.isSyncing)
 	{
-		let id = await initAutoSyncRequest();
+		let id = await initAutoSyncRequest().catch((error) => {autoSyncControlError(error); return; });
 		MusicSync.syncId = id;
 		autoSyncSendAudio(MusicSync.syncId);
 		autoSyncSendScore(MusicSync.syncId);
-		await waitWhileUploadCompletes(MusicSync.syncId);
+		await waitWhileUploadCompletes(MusicSync.syncId).catch((error) => {autoSyncControlError(error); return; });
 		autoSyncStartSync(MusicSync.syncId);
-		let status = await waitWhileAutoSyncing(MusicSync.syncId);
-		getSyncInfo(MusicSync.syncId);
-		MusicSync.isSyncing = false;
+		let status = await waitWhileAutoSyncing(MusicSync.syncId).catch((error) => {autoSyncControlError(error); return; });
+		if (status == SYNC_COMPLETE)
+		{
+			let syncData = await getSyncInfo(MusicSync.syncId).catch((error) => {autoSyncControlError(error); return; });
+			console.log(syncData);
+			//loadSyncInput(MusicSync.measures, MusicSync.timepointToMeasure, inputFileObject, updateMeasureTimepointLabel)
+			console.log("WERE HERE");
+		}
+		else
+		{
+			error("Autosynchronisation failed due to server error", true);
+		}
+		stopAutoSync();
 		updateAutoSyncButton();
 	}
 	else
@@ -937,6 +970,7 @@ function selectSyncFile(input)
 function selectScoreFile(input) 
 {
 	const fileName = input.files[0].name;
+	stopAutoSync();
 	startLoadingSign();
 	changeScore(input.files[0]);
 	updateLabel(SCORE_FILE_NAME, fileName);
@@ -948,6 +982,7 @@ function selectScoreFile(input)
  */
 function selectAudioFile(input)
 {
+	stopAutoSync();
 	changeAudioPlayerSource(input.files[0]);
 	updateLabel(AUDIO_FILE_NAME, input.files[0].name);
 	updateSeeker();

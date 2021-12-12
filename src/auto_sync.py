@@ -86,8 +86,11 @@ def approximate_expanded_measure_time_positions(source_expanded, optimal_warping
 def timepoints_to_sync_file(measure_sync, sync_file_path):
     with open(sync_file_path, "w") as file:
         file.write("[\n")
+        i = 0
         for measure in measure_sync:
-            file.write(f"{str(measure_sync[measure])},\n")
+            file.write(f"{str(measure_sync[measure])}")
+            file.write("\n") if i == len(measure_sync) - 1 else file.write(",\n")
+            i += 1
         file.write("]\n")
 
 def clean_up(temporary_files_path):

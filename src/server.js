@@ -67,7 +67,19 @@ app.post('/autosync/:id/score', (request, response) => {
 });
 
 app.get('/autosync/:id/sync', (request, response) => {
-
+	const syncPath = path.join(APP_DATA_PREFIX, '/', request.params.id, '/sync');
+	fs.readFile(syncPath, (error, json) => {
+		if (error)
+		{
+			response.status(500);
+			response.send();
+			return;
+		}
+		else
+		{
+			response.send(json);
+		}
+	});
 });
 
 app.post('/autosync/:id/sync', (request, response) => {
@@ -125,6 +137,12 @@ app.get('/autosync/:id', (request, response) => {
 						if (exists)
 						{
 							fs.readFile(pidPath, (error, data) => {
+								if (error)
+								{
+									response.status(500);
+									response.send();
+									return;
+								}
 								if (data == "0")
 								{
 									response.send(JSON.stringify({ status: AUTO_SYNC_STATUS.SYNC_COMPLETE}));
