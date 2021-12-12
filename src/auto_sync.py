@@ -4,6 +4,7 @@ import music21
 import librosa
 import libfmp.c3
 from pydub import AudioSegment
+from sortedcontainers import SortedDict
 import pdb
 
 TMP_MIDI = "score.midi"
@@ -30,7 +31,10 @@ def score_file_to_score(score_file_path):
             file_type_extension = ".mxl"
     os.rename(score_file_path, score_file_path + file_type_extension) # we append inferred extension to the musicxml file. TODO: change REST API endpoints to send file type info to server
     source = music21.converter.parse(score_file_path + file_type_extension)
-    source_unrolled = source.expandRepeats()
+    try:
+        source_unrolled = source.expandRepeats()
+    except music21.repeat.ExpanderException:
+        source_unrolled = source # this is a workaround for https://github.com/cuthbertLab/music21/issues/355. Hopefully, the failure is due to the lack of repetitions and not a malformed file
     os.rename(score_file_path + file_type_extension, score_file_path)
     return source, source_unrolled
 
@@ -52,7 +56,7 @@ def dynamic_time_warping(score_chroma, audio_chroma):
     return P
 
 def approximate_expanded_measure_time_positions(source_expanded, optimal_warping_path, hop_size, sample_rate):
-    expanded_measure_time_positions = []
+    expanded_measure_time_positions = SortedDict()
     score_timepoint_before = 0
     score_timepoint_after = frame_to_seconds(optimal_warping_path[0][0], hop_size, sample_rate)
     path_index = 0
@@ -68,13 +72,32 @@ def approximate_expanded_measure_time_positions(source_expanded, optimal_warping
                 audio_timepoint_before = frame_to_seconds(optimal_warping_path[path_index - 1][1], hop_size, sample_rate)
                 audio_timepoint_after = frame_to_seconds(optimal_warping_path[path_index][1], hop_size, sample_rate)
                 approx_audio_timepoint = audio_timepoint_before + local_metric_distance * (audio_timepoint_after - audio_timepoint_before)
-                expanded_measure_time_positions.append(approx_audio_timepoint)
-            else:
-                expanded_measure_time_positions.append(None)
+                if measure.number in expanded_measure_time_positions:
+                    expanded_measure_time_positions[measure.number].append(approx_audio_timepoint)
+                else:
+                    expanded_measure_time_positions[measure.number] = [approx_audio_timepoint]
+            elif not measure.number in expanded_measure_time_positions:
+                expanded_measure_time_positions[measure.number] = []
     except:
-        return []
+        return None
     else:
         return expanded_measure_time_positions
+
+def timepoints_to_sync_file(measure_sync, sync_file_path):
+    with open(sync_file_path, "w") as file:
+        file.write("[\n")
+        for measure in measure_sync:
+            file.write(f"{str(measure_sync[measure])},\n")
+        file.write("]\n")
+
+def clean_up(temporary_files_path):
+    success = True
+    for file_path in temporary_files_path:
+        try:
+            os.unlink(file_path)
+        except:
+            success = False
+    return success
 
 def pipeline(audio_file_path, score_file_path, sync_file_path):
     # Autosync pipeline:
@@ -92,12 +115,12 @@ def pipeline(audio_file_path, score_file_path, sync_file_path):
     # 6. Run dynamic time warping algorithm
     optimal_warping_path = dynamic_time_warping(score_chroma, audio_chroma)
     # 7. Approximate audio timepoints for expanded score's measures
-    expanded_measure_sync = approximate_expanded_measure_time_positions(source_expanded, optimal_warping_path, HOP_SIZE, sample_rate)
-    pdb.set_trace()
-    """
-    with open(sync_file_path, "w") as file:
-        file.write(f"{audio_file_path}, {score_file_path}, {sync_file_path}\n")
-    """
+    measure_sync = approximate_expanded_measure_time_positions(source_expanded, optimal_warping_path, HOP_SIZE, sample_rate)
+    # 8. Write out synchronisation info
+    if measure_sync is not None:
+        timepoints_to_sync_file(measure_sync, sync_file_path)
+    # 9. Clean-up
+    clean_up([TMP_MIDI])
 
 if __name__ == "__main__":
     pipeline(sys.argv[1], sys.argv[2], sys.argv[3])
