@@ -1,5 +1,2 @@
 src/node_modules
-src/audio
-src/score
-src/score.midi
-src/song.mp3
+tests/
