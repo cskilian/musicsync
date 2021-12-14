@@ -18,7 +18,7 @@ pip3 install -r requirements.txt
 ```
 To run the application:
 ```
-node server.js
+node src/server.js
 ```
 Then just navigate to the ip address:port number using a web browser
 
@@ -30,7 +30,7 @@ To load the audio file, click on "Select File" next to the Audio field or drag a
 To load the MusicXML file, click on "Select File" next to the Sheetmusic field or drag and drop a valid MusicXML or a compressed .mxl file into the "Sheetmusic" field.
 
 ### Automatic Synchronisation
-Click on "AutoSync" after the audio file and sheetmusic have loaded, and wait a few seconds while the server is synchronising the files. The "AutoSync" button will have an orange colour while the server is syncrhonising.
+Click on "AutoSync" after the audio file and sheetmusic have loaded, and wait a few seconds - to a minute while the server is synchronising the files. The "AutoSync" button will have an orange colour while the server is syncrhonising. When it's complete, the "AutoSync" button will turn back to a grey colour and you will see the timepoints populated above the measures.
 
 ### Manual Syncrhonisation
 Click on "ManualSync" after the audio file and sheetmusic have loaded. The music will begin playing and the application will be in "ManualSync" mode as indicated by the "ManualSync" button's red colour. As the music is playing click on each measure at the desired time. The current timepoint in the audio file will be assigned to the measure that was clicked. The timepoint will be shown above the measure. To stop synchronisation, click on the "ManualSync" button again to turn it off.
