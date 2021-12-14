@@ -197,6 +197,12 @@ function changeAudioPlayerPositionControl(timepoint)
 {
 	const audioPlayer = document.getElementById(AUDIO_PLAYER_ID);
 	audioPlayer.currentTime = timepoint;
+	findNextTimepoint();
+}
+
+function findNextTimepoint()
+{
+	const audioPlayer = document.getElementById(AUDIO_PLAYER_ID);
 	if (MusicSync.timepointToMeasure !== undefined)
 	{
 		MusicSync.timepointIterator = MusicSync.timepointToMeasure.keys();
@@ -207,7 +213,6 @@ function changeAudioPlayerPositionControl(timepoint)
 		}
 	}
 }
-
 
 function changeScore(file)
 {
@@ -252,6 +257,7 @@ function loadAndValidateSyncFile(file)
 		{
 			error("Loaded sync file does not match musical score", true);
 		}
+		findNextTimepoint();
 	};
 	fileReader.readAsText(file);
 }
@@ -558,6 +564,7 @@ async function autoSyncControl()
 			let syncData = await getSyncInfo(MusicSync.syncId).catch((error) => {autoSyncControlError(error); return;});
 			let syncedMeasures = autosyncTimepointsToMeasures(syncData, MusicSync.measures);
 			loadSyncInput(MusicSync.measures, MusicSync.timepointToMeasure, syncedMeasures, updateMeasureTimepointLabelAndTurnOffHighlighting);
+			findNextTimepoint();
 			console.log("WERE HERE");
 		}
 		else
