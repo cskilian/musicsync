@@ -315,6 +315,20 @@ function loadSyncInput(musicSyncMeasures, musicSyncTimepointToMeasure, inputObje
 	return valid;
 }
 
+function autosyncTimepointsToMeasures(timepoints, musicSyncMeasures)
+{
+	importedMeasures = []
+	for (let i = 0; i < timepoints.length; ++i)
+	{
+		let measure = new Object();
+		measure.repeat = musicSyncMeasures[i].repeat;
+		measure.timepoint = timepoints[i];
+		importedMeasures.push(measure);
+	}
+	return importedMeasures;
+}
+
+
 function stopAudioControl()
 {
 	const audioPlayer = document.getElementById(AUDIO_PLAYER_ID);
@@ -453,7 +467,7 @@ function getAutoSyncStatus(id)
 			}
 		};
 		xhr.onerror = () => {
-			reject(xhr.status);
+			resolve(-1);
 		};
 		xhr.open("GET", `/autosync/${id}`, true);
 		xhr.setRequestHeader("Content-Type", "application/json");
@@ -463,7 +477,7 @@ function getAutoSyncStatus(id)
 
 async function waitWhileUploadCompletes(id)
 {
-	while (MusicSync.isSyncing && (await getAutoSyncStatus) < READY_TO_SYNC)
+	while (MusicSync.isSyncing && (await getAutoSyncStatus(id)) < READY_TO_SYNC)
 	{
 		await new Promise(resolve => setTimeout(resolve, 1000));
 	}
@@ -531,18 +545,18 @@ async function autoSyncControl()
 	MusicSync.isSyncing = !MusicSync.isSyncing;
 	if (MusicSync.isSyncing)
 	{
-		let id = await initAutoSyncRequest().catch((error) => {autoSyncControlError(error); return; });
+		let id = await initAutoSyncRequest().catch((error) => {autoSyncControlError(error); return;});
 		MusicSync.syncId = id;
 		autoSyncSendAudio(MusicSync.syncId);
 		autoSyncSendScore(MusicSync.syncId);
-		await waitWhileUploadCompletes(MusicSync.syncId).catch((error) => {autoSyncControlError(error); return; });
+		await waitWhileUploadCompletes(MusicSync.syncId);
 		autoSyncStartSync(MusicSync.syncId);
-		let status = await waitWhileAutoSyncing(MusicSync.syncId).catch((error) => {autoSyncControlError(error); return; });
+		let status = await waitWhileAutoSyncing(MusicSync.syncId);
 		if (status == SYNC_COMPLETE)
 		{
-			let syncData = await getSyncInfo(MusicSync.syncId).catch((error) => {autoSyncControlError(error); return; });
-			console.log(syncData);
-			//loadSyncInput(MusicSync.measures, MusicSync.timepointToMeasure, inputFileObject, updateMeasureTimepointLabel)
+			let syncData = await getSyncInfo(MusicSync.syncId).catch((error) => {autoSyncControlError(error); return;});
+			let syncedMeasures = autosyncTimepointsToMeasures(syncData, MusicSync.measures);
+			loadSyncInput(MusicSync.measures, MusicSync.timepointToMeasure, syncedMeasures, updateMeasureTimepointLabel);
 			console.log("WERE HERE");
 		}
 		else

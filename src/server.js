@@ -77,6 +77,7 @@ app.get('/autosync/:id/sync', (request, response) => {
 		}
 		else
 		{
+			response.status(200);
 			response.send(json);
 		}
 	});
@@ -127,6 +128,9 @@ app.get('/autosync/:id', (request, response) => {
 	const syncPath = path.join(APP_DATA_PREFIX, '/', request.params.id, '/sync');
 	const scorePath = path.join(APP_DATA_PREFIX, '/', request.params.id, '/score');
 	const audioPath = path.join(APP_DATA_PREFIX, '/', request.params.id, '/audio');
+	response.header("Cache-Control", "no-cache, no-store, must-revalidate");
+	response.header("Pragma", "no-cache");
+	response.header("Expires", 0);
 	fs.exists(audioPath, (exists) => {
 		if (exists)
 		{
@@ -139,38 +143,45 @@ app.get('/autosync/:id', (request, response) => {
 							fs.readFile(pidPath, (error, data) => {
 								if (error)
 								{
-									response.status(500);
-									response.send();
+									console.log(error);
+									response.status(200);
+									response.send({ status: AUTO_SYNC_STATUS.STILL_SYNCING});
 									return;
 								}
 								if (data == "0")
 								{
+									response.status(200);
 									response.send(JSON.stringify({ status: AUTO_SYNC_STATUS.SYNC_COMPLETE}));
 								}
 								else if (data == "1")
 								{
+									response.status(200);
 									response.send(JSON.stringify({ status: AUTO_SYNC_STATUS.SYNC_FAILED}));
 								}
 								else
 								{
+									response.status(200);
 									response.send(JSON.stringify({ status: AUTO_SYNC_STATUS.STILL_SYNCING}));
 								}
 							});
 						}
 						else
 						{
+							response.status(200);
 							response.send(JSON.stringify({ status: AUTO_SYNC_STATUS.READY_TO_SYNC}));
 						}
 					});
 				}
 				else
 				{
+					response.status(200);
 					response.send(JSON.stringify({ status: AUTO_SYNC_STATUS.NO_SCORE}));
 				}
 			});
 		}
 		else
 		{
+			response.status(200);
 			response.send(JSON.stringify({ status: AUTO_SYNC_STATUS.NO_AUDIO}));
 		}
 	});
