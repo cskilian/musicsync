@@ -208,6 +208,7 @@ function changeAudioPlayerPositionControl(timepoint)
 	}
 }
 
+
 function changeScore(file)
 {
 	let fileReader = new FileReader();
@@ -247,7 +248,7 @@ function loadAndValidateSyncFile(file)
 	fileReader.onload = (event) => {
 		const inputFileString = event.target.result;
 		const inputFileObject = JSON.parse(inputFileString);
-		if (!loadSyncInput(MusicSync.measures, MusicSync.timepointToMeasure, inputFileObject, updateMeasureTimepointLabel))
+		if (!loadSyncInput(MusicSync.measures, MusicSync.timepointToMeasure, inputFileObject, updateMeasureTimepointLabelAndTurnOffHighlighting))
 		{
 			error("Loaded sync file does not match musical score", true);
 		}
@@ -556,7 +557,7 @@ async function autoSyncControl()
 		{
 			let syncData = await getSyncInfo(MusicSync.syncId).catch((error) => {autoSyncControlError(error); return;});
 			let syncedMeasures = autosyncTimepointsToMeasures(syncData, MusicSync.measures);
-			loadSyncInput(MusicSync.measures, MusicSync.timepointToMeasure, syncedMeasures, updateMeasureTimepointLabel);
+			loadSyncInput(MusicSync.measures, MusicSync.timepointToMeasure, syncedMeasures, updateMeasureTimepointLabelAndTurnOffHighlighting);
 			console.log("WERE HERE");
 		}
 		else
@@ -620,32 +621,47 @@ function timeUpdate(duration)
  		{
  			seeker.style.maginLeft = timelineWidth + "px";
  		}
- 		if (MusicSync.nextTimepoint !== undefined && MusicSync.nextTimepoint <= audioPlayer.currentTime)
+ 		if (MusicSync.nextTimepoint !== undefined && !MusicSync.isRecording && MusicSync.nextTimepoint <= audioPlayer.currentTime)
  		{
  			const currentMeasure = MusicSync.timepointToMeasure.get(MusicSync.nextTimepoint);
- 			const currentMeasureBoxes = document.getElementsByClassName(`measure-box-${currentMeasure}`);
- 			for (let i = 0; i < currentMeasureBoxes.length; ++i)
- 			{
- 				const currentMeasureBox = currentMeasureBoxes[i];
- 				currentMeasureBox.style.fill = "green";
- 				currentMeasureBox.style.opacity = 0.3;
- 			}
+ 			setMeasureHighlighting(currentMeasure, true);
   			if (MusicSync.previousTimepoint !== undefined)
  			{
  				const previousMeasure = MusicSync.timepointToMeasure.get(MusicSync.previousTimepoint);
- 				const previousMeasureBoxes = document.getElementsByClassName(`measure-box-${previousMeasure}`);
- 				for (let i = 0; i < previousMeasureBoxes.length; ++i)
- 				{
- 					const previousMeasureBox = previousMeasureBoxes[i];
- 					previousMeasureBox.style.fill = null;
- 					previousMeasureBox.style.opacity = 0;
- 				}
+ 				setMeasureHighlighting(previousMeasure, false);
  			}
  			MusicSync.previousTimepoint = MusicSync.nextTimepoint;
  			MusicSync.nextTimepoint = MusicSync.timepointIterator.next().value;
  		}
  	}
  	return timeUpdateFn;
+}
+
+function setMeasureHighlighting(measureIndex, onOff)
+{
+	const measureBoxes = document.getElementsByClassName(`measure-box-${measureIndex}`);
+	for (let i = 0; i < measureBoxes.length; ++i)
+ 	{
+ 		const currentMeasureBox = measureBoxes[i];
+ 		if (onOff)
+ 		{
+ 			currentMeasureBox.style.fill = "green";
+ 			currentMeasureBox.style.opacity = 0.3;
+ 		}
+ 		else
+ 		{
+ 			currentMeasureBox.style.fill = null;
+ 			currentMeasureBox.style.opacity = 0;
+ 		}
+ 	}
+}
+
+function turnOffAllMeasureHighlighting()
+{
+	for (let i = 0; i < MusicSync.measures.length; ++i)
+	{
+		setMeasureHighlighting(i, false);
+	}
 }
 
 function updatePlayPauseButton()
@@ -802,6 +818,12 @@ function updateMeasureTimepointLabel(measureIndex)
 		measureContainer.appendChild(measureLabel);
 	}
 	svgCanvas.appendChild(measureContainer);
+}
+
+function updateMeasureTimepointLabelAndTurnOffHighlighting(measureIndex)
+{
+	setMeasureHighlighting(measureIndex, false);
+	updateMeasureTimepointLabel(measureIndex);
 }
 
 function makeAndClickDownloadAnchor(saved)
@@ -1057,6 +1079,7 @@ function manualSync()
 		return;
 	}
 	stopAutoSync();
+	turnOffAllMeasureHighlighting();
 	manualSyncControl();
 	updateAutoSyncButton();
 	updateManualSyncButton();
