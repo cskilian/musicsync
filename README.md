@@ -7,18 +7,35 @@ Prerequisites:
 - npm
 - python 3.7+
 - PyPI (pip)
-- ffmpeg (on Linux only)
+- ffmpeg (with MIDI support!)
 
-You need the above installed and add it to your $PATH
+You need all of the above installed and add it to your $PATH
+
+Check that ffmpeg has MIDI support:
+
+On a UNIX system running:
+```
+ffmpeg -formats | grep MIDI
+
+```
+should yield the following line:
+```
+ D  sds             MIDI Sample Dump Standard
+```
 
 Run the following in the app directory to install dependencies:
 ```
+cd ./src
 npm install
 pip3 install -r requirements.txt
 ```
+
+Set your Node environment variables in config.js. In particular, PYTHON has to be the name of the Python 3 binary.
+
 To run the application:
 ```
-node src/server.js
+cd ./src
+node server.js
 ```
 Then just navigate to the ip address:port number using a web browser
 
@@ -37,3 +54,29 @@ Click on "ManualSync" after the audio file and sheetmusic have loaded. The music
 
 ### Playback
 When "ManualSync" is turned off, click on any bar with a corresponding timepoint and then click "Play". The audio should play back from the time corresponding to the measure.
+
+## Troubleshooting
+
+### Alternative installation for the Auto Synchronisation feature
+You can install python and the dependenices into an Anaconda environment
+1. Install conda and add it to your $PATH
+2. Create and enter conda environment:
+```
+conda create --name MusicSync python=3.9
+source activate MusicSync 
+```
+3. Install the dependencies:
+```
+conda config --add channels conda-forge
+conda config --set channel_priority strict
+conda install librosa music21 pydub sortedcontainers
+pip install libfmp
+```
+4. Change your Node environment variable in config.js so that PYTHON: 'python'
+5. Source your conda environment then run the server:
+```
+source activate MusicSync
+cd ./src
+node server.js
+```
+IMPORTANT: you must be in your conda environment before running the Node server.
