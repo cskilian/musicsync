@@ -96,7 +96,7 @@ app.post('/autosync/:id/sync', (request, response) => {
 				{
 					let child = spawn(config.PYTHON, ['auto_sync.py', audioPath, scorePath, syncPath]);
 					child.on('spawn', () => {
-						fs.writeFile(pidPath, child.pid, (error) => {});
+						fs.writeFile(pidPath, child.pid.toString(), (error) => {});
 					});
 					child.on('error', (error) => {
 						fs.writeFile(pidPath, '1', (error) => {});
