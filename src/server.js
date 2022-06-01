@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const uuid = require('uuid');
 var spawn = require('child_process').spawn;
+const bodyParser = require('body-parser');
 const app = express();
 
 const CLIENT_DIR = 'client';
@@ -26,6 +27,7 @@ const AUTO_SYNC_STATUS = {
 
 app.use('/css', express.static(path.join(__dirname, `${CLIENT_DIR}/css`)));
 app.use('/', express.static(path.join(__dirname, CLIENT_DIR)));
+app.use(bodyParser.json());
 
 
 app.post('/autosync/:id/audio', (request, response) => {
@@ -53,17 +55,22 @@ app.post('/autosync/:id/audio', (request, response) => {
 
 
 app.post('/autosync/:id/score', (request, response) => {
-	let fstream = fs.createWriteStream(path.join(APP_DATA_PREFIX, '/', request.params.id, '/score'));
-	fstream.on('finish', (error) => {
-		response.status(200);
-		response.send();
+	console.log(request.body)
+	const scorePath = path.join(APP_DATA_PREFIX, '/', request.params.id, '/score.' + request.body.extension);
+	const buff = Buffer.from(request.body.data, 'base64');
+	fs.writeFile(scorePath, buff, (error) => {
+		if (error)
+		{
+			response.status(500);
+			response.send();
+		}
+		else
+		{
+			response.status(200);
+			response.send();
+		}
 	});
-	fstream.on('error', (error) => {
-		console.log(error);
-		response.status(500);
-		response.send();
-	});
-	request.pipe(fstream);
+	console.log("extension: ", request.body)
 });
 
 app.get('/autosync/:id/sync', (request, response) => {

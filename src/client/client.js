@@ -225,13 +225,8 @@ function changeScore(file)
 			createClickBoundingBoxes();
 			endLoadingSign();
 		});
-		let fileArrayBuffer = new ArrayBuffer(event.target.result.length);
-		let writer = new Uint8Array(fileArrayBuffer);
-		for (var i = 0, len = event.target.result.length; i < len; ++i)
-		{
-			writer[i] = event.target.result.charCodeAt(i);
-		}
-		MusicSync.scoreFileData = fileArrayBuffer;
+		fileNameArray = file.name.toLowerCase().split(".")
+		MusicSync.scoreFileData = {extension: fileNameArray[fileNameArray.length - 1], data: btoa(event.target.result)};
 	};
 	if (file.name.toLowerCase().endsWith(".xml") || file.name.toLowerCase().endsWith(".musicxml"))
 	{
@@ -452,7 +447,8 @@ function autoSyncSendScore(id)
 {
 	let xhr = new XMLHttpRequest();
 	xhr.open("POST", `/autosync/${id}/score`, true);
-	xhr.send(MusicSync.scoreFileData);
+	xhr.setRequestHeader("Content-Type", "application/json");
+	xhr.send(JSON.stringify(MusicSync.scoreFileData));
 }
 
 function autoSyncStartSync(id)
