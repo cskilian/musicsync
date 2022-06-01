@@ -17,25 +17,22 @@ def frame_to_seconds(frame, hop_size, sample_rate):
     return (frame * hop_size) / sample_rate
 
 def audio_file_to_wave(audio_file_path):
-    try:
-        source = AudioSegment.from_mp3(audio_file_path)
-        source.export(audio_file_path, format = "wav") # we export mp3-to-wave if we can. TODO: change REST API endpoints to send file type info to server
-    finally:
-        audio_wave, sample_rate = librosa.load(audio_file_path, sr = SAMPLE_RATE)
-        return audio_wave, sample_rate
+    if ".mp3" in audio_file_path:
+        try:
+            source = AudioSegment.from_mp3(audio_file_path)
+            source.export(audio_file_path + ".wav", format = "wav")
+            audio_file_path = audio_file_path + ".wav"
+        except:
+            sys.exit(1);
+    audio_wave, sample_rate = librosa.load(audio_file_path, sr = SAMPLE_RATE)
+    return audio_wave, sample_rate
 
 def score_file_to_score(score_file_path):
-    file_type_extension = ".musicxml"
-    with open(score_file_path, "rb") as file:
-        if file.read(4) == b'\x50\x4b\x03\x04': # check by the magic number if we have a compressed musicxml file. TODO: change REST API endpoints to send file type info to server
-            file_type_extension = ".mxl"
-    os.rename(score_file_path, score_file_path + file_type_extension) # we append inferred extension to the musicxml file. TODO: change REST API endpoints to send file type info to server
-    source = music21.converter.parse(score_file_path + file_type_extension)
+    source = music21.converter.parse(score_file_path)
     try:
         source_unrolled = source.expandRepeats()
     except music21.repeat.ExpanderException:
         source_unrolled = source # this is a workaround for https://github.com/cuthbertLab/music21/issues/355. Hopefully, the failure is due to the lack of repetitions and not a malformed file
-    os.rename(score_file_path + file_type_extension, score_file_path)
     return source, source_unrolled
 
 def strip_metronome_markings(stream):
