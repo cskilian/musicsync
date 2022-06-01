@@ -27,35 +27,30 @@ const AUTO_SYNC_STATUS = {
 
 app.use('/css', express.static(path.join(__dirname, `${CLIENT_DIR}/css`)));
 app.use('/', express.static(path.join(__dirname, CLIENT_DIR)));
-app.use(bodyParser.json());
+app.use(bodyParser.json({limit: '50mb'}));
 
 
 app.post('/autosync/:id/audio', (request, response) => {
-	let data = '';
-	request.on('data', (chunk) => {
-		data += chunk;
+	console.log(request.body);
+	const audioPath = path.join(APP_DATA_PREFIX, '/', request.params.id, '/audio.' + request.body.extension);
+	const buff = Buffer.from(request.body.data, 'base64');
+	fs.writeFile(audioPath, buff, (error) => {
+		if (error)
+		{
+			response.status(500);
+			response.send();
+		}
+		else
+		{
+			response.status(200);
+			response.send();
+		}
 	});
-	request.on('end', () => {
-		let stripped = data.split('base64,')[1];
-		let buffer = Buffer.from(stripped, 'base64');
-		fs.writeFile(path.join(APP_DATA_PREFIX, '/', request.params.id, '/audio'), buffer, (error) => {
-			if (error)
-			{
-				response.status(500);
-				response.send();
-			}
-			else
-			{
-				response.status(200);
-				response.send();
-			}
-		});	
-	});
+	console.log("extension: ", request.body)
 });
 
 
 app.post('/autosync/:id/score', (request, response) => {
-	console.log(request.body)
 	const scorePath = path.join(APP_DATA_PREFIX, '/', request.params.id, '/score.' + request.body.extension);
 	const buff = Buffer.from(request.body.data, 'base64');
 	fs.writeFile(scorePath, buff, (error) => {

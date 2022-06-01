@@ -55,6 +55,7 @@ var MusicSync = {
 	nextTimepoint: undefined,
 	previousTimepoint: undefined,
 	scoreFileData: undefined,
+	audioFileData: undefined,
 	isSyncing: false,
 	syncId: undefined,
 };
@@ -378,6 +379,8 @@ function changeAudioPlayerSource(file)
 	var fileReader = new FileReader();
 	fileReader.onload = (event) => {
 		audioPlayer.src = event.target.result;
+		fileNameArray = file.name.toLowerCase().split(".");
+		MusicSync.audioFileData = {extension: fileNameArray[fileNameArray.length - 1], data: audioPlayer.src};
 	}
 	fileReader.readAsDataURL(file);
 	audioPlayer.addEventListener('canplaythrough', () => {
@@ -440,7 +443,8 @@ function autoSyncSendAudio(id)
 	let audioPlayer = document.getElementById(AUDIO_PLAYER_ID);
 	let xhr = new XMLHttpRequest();
 	xhr.open("POST", `/autosync/${id}/audio`, true);
-	xhr.send(audioPlayer.src);
+	xhr.setRequestHeader("Content-Type", "application/json");
+	xhr.send(JSON.stringify(MusicSync.audioFileData));
 }
 
 function autoSyncSendScore(id)
