@@ -17,10 +17,7 @@ def frame_to_seconds(frame, hop_size, sample_rate):
     return (frame * hop_size) / sample_rate
 
 def audio_file_to_wave(audio_file_path):
-    try:
-        audio_wave, sample_rate = librosa.load(audio_file_path, sr = SAMPLE_RATE)
-    except:
-        sys.exit(1);
+    audio_wave, sample_rate = librosa.load(audio_file_path, sr = SAMPLE_RATE)
     return audio_wave, sample_rate
 
 def score_file_to_score(score_file_path):
@@ -53,26 +50,25 @@ def approximate_expanded_measure_time_positions(source_expanded, optimal_warping
     score_timepoint_before = 0
     score_timepoint_after = frame_to_seconds(optimal_warping_path[0][0], hop_size, sample_rate)
     path_index = 0
-    try:
-        for measure in source_expanded.parts[0].getElementsByClass("Measure"):
-            measure_timepoint_star = float(measure.getOffsetBySite(source_expanded.parts[0])) * 60 / DEFAULT_BPM
-            while path_index < len(optimal_warping_path) and not (score_timepoint_before <= measure_timepoint_star and measure_timepoint_star < score_timepoint_after):
-                path_index += 1
-                score_timepoint_before = score_timepoint_after
-                score_timepoint_after = frame_to_seconds(optimal_warping_path[path_index][0], hop_size, sample_rate)
-            if score_timepoint_before <= measure_timepoint_star and measure_timepoint_star < score_timepoint_after:
-                local_metric_distance = (measure_timepoint_star - score_timepoint_before) / (score_timepoint_after - score_timepoint_before)
-                audio_timepoint_before = frame_to_seconds(optimal_warping_path[path_index - 1][1], hop_size, sample_rate)
-                audio_timepoint_after = frame_to_seconds(optimal_warping_path[path_index][1], hop_size, sample_rate)
-                approx_audio_timepoint = audio_timepoint_before + local_metric_distance * (audio_timepoint_after - audio_timepoint_before)
-                if measure.number in expanded_measure_time_positions:
-                    expanded_measure_time_positions[measure.number].append(approx_audio_timepoint)
-                else:
-                    expanded_measure_time_positions[measure.number] = [approx_audio_timepoint]
-            elif not measure.number in expanded_measure_time_positions:
-                expanded_measure_time_positions[measure.number] = []
-    except:
-        return sys.exit(1);
+    for measure in source_expanded.parts[0].getElementsByClass("Measure"):
+        measure_timepoint_star = float(measure.getOffsetBySite(source_expanded.parts[0])) * 60 / DEFAULT_BPM
+        while path_index < len(optimal_warping_path) and not (score_timepoint_before <= measure_timepoint_star and measure_timepoint_star < score_timepoint_after):
+            # find the nearest note onsets for a measure onset estimate within the score domain
+            path_index += 1
+            score_timepoint_before = score_timepoint_after
+            score_timepoint_after = frame_to_seconds(optimal_warping_path[path_index][0], hop_size, sample_rate)
+        if score_timepoint_before <= measure_timepoint_star and measure_timepoint_star < score_timepoint_after:
+            # approximate the measure onset in the audio from the note onsets within the corresponding audio domain
+            local_metric_distance = (measure_timepoint_star - score_timepoint_before) / (score_timepoint_after - score_timepoint_before)
+            audio_timepoint_before = frame_to_seconds(optimal_warping_path[path_index - 1][1], hop_size, sample_rate)
+            audio_timepoint_after = frame_to_seconds(optimal_warping_path[path_index][1], hop_size, sample_rate)
+            approx_audio_timepoint = audio_timepoint_before + local_metric_distance * (audio_timepoint_after - audio_timepoint_before)
+            if measure.number in expanded_measure_time_positions:
+                expanded_measure_time_positions[measure.number].append(approx_audio_timepoint)
+            else:
+                expanded_measure_time_positions[measure.number] = [approx_audio_timepoint]
+        elif not measure.number in expanded_measure_time_positions:
+            expanded_measure_time_positions[measure.number] = []
     return expanded_measure_time_positions
 
 def timepoints_to_sync_file(measure_sync, sync_file_path):
@@ -95,26 +91,30 @@ def clean_up(temporary_files_path):
     return success
 
 def pipeline(audio_file_path, score_file_path, sync_file_path):
-    # Autosync pipeline:
-    # 1. Load audio file to wave array
-    audio_wave, sample_rate = audio_file_to_wave(audio_file_path)
-    # 2. Load sheet-music to music21 stream object
-    source, source_expanded = score_file_to_score_without_metronome_markings(score_file_path)
-    # 3. Export unrolled sheet-music to temporary midi file
-    source_expanded.write("midi", TMP_MIDI)
-    # 4. Load and export midi to wave array
-    score_wave, sample_rate = librosa.load(TMP_MIDI, sr = SAMPLE_RATE)
-    # 5. Generate chroma graph from wave arrays
-    audio_chroma = librosa.feature.chroma_stft(y = audio_wave, sr = SAMPLE_RATE, tuning = 0, norm = 2, hop_length = HOP_SIZE, n_fft = WINDOW_LENGTH)
-    score_chroma = librosa.feature.chroma_stft(y = score_wave, sr = SAMPLE_RATE, tuning = 0, norm = 2, hop_length = HOP_SIZE, n_fft = WINDOW_LENGTH)
-    # 6. Run dynamic time warping algorithm
-    optimal_warping_path = dynamic_time_warping(score_chroma, audio_chroma)
-    # 7. Approximate audio timepoints for expanded score's measures
-    measure_sync = approximate_expanded_measure_time_positions(source_expanded, optimal_warping_path, HOP_SIZE, sample_rate)
-    # 8. Write out synchronisation info
-    timepoints_to_sync_file(measure_sync, sync_file_path)
-    # 9. Clean-up
-    clean_up([TMP_MIDI])
+    try:
+        # Autosync pipeline:
+        # 1. Load audio file to wave array
+        audio_wave, sample_rate = audio_file_to_wave(audio_file_path)
+        # 2. Load sheet-music to music21 stream object
+        source, source_expanded = score_file_to_score_without_metronome_markings(score_file_path)
+        # 3. Export unrolled sheet-music to temporary midi file
+        source_expanded.write("midi", TMP_MIDI)
+        # 4. Load and export midi to wave array
+        score_wave, sample_rate = librosa.load(TMP_MIDI, sr = SAMPLE_RATE)
+        # 5. Generate chroma graph from wave arrays
+        audio_chroma = librosa.feature.chroma_stft(y = audio_wave, sr = SAMPLE_RATE, tuning = 0, norm = 2, hop_length = HOP_SIZE, n_fft = WINDOW_LENGTH)
+        score_chroma = librosa.feature.chroma_stft(y = score_wave, sr = SAMPLE_RATE, tuning = 0, norm = 2, hop_length = HOP_SIZE, n_fft = WINDOW_LENGTH)
+        # 6. Run dynamic time warping algorithm
+        optimal_warping_path = dynamic_time_warping(score_chroma, audio_chroma)
+        # 7. Approximate audio timepoints for expanded score's measures
+        measure_sync = approximate_expanded_measure_time_positions(source_expanded, optimal_warping_path, HOP_SIZE, sample_rate)
+        # 8. Write out synchronisation info
+        timepoints_to_sync_file(measure_sync, sync_file_path)
+    except:
+        sys.exit(1);
+    finally:
+        # 9. Clean-up
+        clean_up([TMP_MIDI])
 
 if __name__ == "__main__":
     pipeline(sys.argv[1], sys.argv[2], sys.argv[3])
