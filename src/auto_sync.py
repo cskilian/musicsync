@@ -72,9 +72,8 @@ def approximate_expanded_measure_time_positions(source_expanded, optimal_warping
             elif not measure.number in expanded_measure_time_positions:
                 expanded_measure_time_positions[measure.number] = []
     except:
-        return None
-    else:
-        return expanded_measure_time_positions
+        return sys.exit(1);
+    return expanded_measure_time_positions
 
 def timepoints_to_sync_file(measure_sync, sync_file_path):
     with open(sync_file_path, "w") as file:
@@ -113,8 +112,7 @@ def pipeline(audio_file_path, score_file_path, sync_file_path):
     # 7. Approximate audio timepoints for expanded score's measures
     measure_sync = approximate_expanded_measure_time_positions(source_expanded, optimal_warping_path, HOP_SIZE, sample_rate)
     # 8. Write out synchronisation info
-    if measure_sync is not None:
-        timepoints_to_sync_file(measure_sync, sync_file_path)
+    timepoints_to_sync_file(measure_sync, sync_file_path)
     # 9. Clean-up
     clean_up([TMP_MIDI])
 
