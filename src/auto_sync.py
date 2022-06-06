@@ -7,7 +7,7 @@ from pydub import AudioSegment
 from sortedcontainers import SortedDict
 import pdb
 
-TMP_MIDI = "score.midi"
+TMP_MIDI = "score.mid"
 SAMPLE_RATE = 22050
 WINDOW_LENGTH = 4410
 HOP_SIZE = 2205
@@ -17,14 +17,10 @@ def frame_to_seconds(frame, hop_size, sample_rate):
     return (frame * hop_size) / sample_rate
 
 def audio_file_to_wave(audio_file_path):
-    if ".mp3" in audio_file_path:
-        try:
-            source = AudioSegment.from_mp3(audio_file_path)
-            source.export(audio_file_path + ".wav", format = "wav")
-            audio_file_path = audio_file_path + ".wav"
-        except:
-            sys.exit(1);
-    audio_wave, sample_rate = librosa.load(audio_file_path, sr = SAMPLE_RATE)
+    try:
+        audio_wave, sample_rate = librosa.load(audio_file_path, sr = SAMPLE_RATE)
+    except:
+        sys.exit(1);
     return audio_wave, sample_rate
 
 def score_file_to_score(score_file_path):
