@@ -31,7 +31,6 @@ app.use(bodyParser.json({limit: '50mb'}));
 
 
 app.post('/autosync/:id/audio', (request, response) => {
-	console.log(request.body);
 	const audioPath = path.join(APP_DATA_PREFIX, '/', request.params.id, '/audio.' + request.body.extension);
 	const buff = Buffer.from(request.body.data, 'base64');
 	fs.writeFile(audioPath, buff, (error) => {
@@ -46,7 +45,6 @@ app.post('/autosync/:id/audio', (request, response) => {
 			response.send();
 		}
 	});
-	console.log("extension: ", request.body)
 });
 
 
@@ -65,7 +63,6 @@ app.post('/autosync/:id/score', (request, response) => {
 			response.send();
 		}
 	});
-	console.log("extension: ", request.body)
 });
 
 app.get('/autosync/:id/sync', (request, response) => {
@@ -92,6 +89,7 @@ app.post('/autosync/:id/sync', (request, response) => {
 	let audioPaths = undefined;
 	let scorePaths = undefined;
 	fs.readdir(workDirPath, (error, files) => {
+		console.log("FILES: " + files)
 		if (error)
 		{
 			response.status(404);
