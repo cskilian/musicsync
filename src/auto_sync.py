@@ -118,3 +118,4 @@ def pipeline(audio_file_path, score_file_path, sync_file_path):
 
 if __name__ == "__main__":
     pipeline(sys.argv[1], sys.argv[2], sys.argv[3])
+    sys.exit(0);

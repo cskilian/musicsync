@@ -86,109 +86,108 @@ app.get('/autosync/:id/sync', (request, response) => {
 });
 
 app.post('/autosync/:id/sync', (request, response) => {
-	const scorePath = path.join(APP_DATA_PREFIX, '/', request.params.id, '/score');
-	const audioPath = path.join(APP_DATA_PREFIX, '/', request.params.id, '/audio');
+	const workDirPath = path.join(APP_DATA_PREFIX, '/', request.params.id);
 	const pidPath = path.join(APP_DATA_PREFIX, '/', request.params.id, '/pid');
 	const syncPath = path.join(APP_DATA_PREFIX, '/', request.params.id, '/sync');
-	fs.exists(audioPath, (exists) => {
-		if (exists)
-		{
-			fs.exists(scorePath, (exists) => {
-				if (exists)
-				{
-					let child = spawn(config.PYTHON, ['auto_sync.py', audioPath, scorePath, syncPath]);
-					child.on('spawn', () => {
-						fs.writeFile(pidPath, child.pid.toString(), (error) => {});
-					});
-					child.on('error', (error) => {
-						fs.writeFile(pidPath, '1', (error) => {});
-					});
-					child.on('exit', (code, signal) => {
-						fs.writeFile(pidPath, code.toString(), (error) => {});
-					});
-					response.status(200);
-					response.send();
-				}
-				else
-				{
-					response.status(404);
-					response.send();
-				}
-			});
-		}
-		else
+	let audioPaths = undefined;
+	let scorePaths = undefined;
+	fs.readdir(workDirPath, (error, files) => {
+		if (error)
 		{
 			response.status(404);
 			response.send();
+		}
+		else
+		{
+			audioPaths = files.filter((elem) => elem.startsWith("audio"));
+			scorePaths = files.filter((elem) => elem.startsWith("score"));
+			if (0 < audioPaths.length && 0 < scorePaths.length)
+			{
+				let child = spawn(config.PYTHON, ['auto_sync.py', audioPaths[0], scorePaths[0], syncPath]);
+				child.on('spawn', () => {
+					fs.writeFile(pidPath, child.pid.toString(), (error) => {});
+				});
+				child.on('error', (error) => {
+					fs.writeFile(pidPath, '1', (error) => {});
+				});
+				child.on('exit', (code, signal) => {
+					fs.writeFile(pidPath, code.toString(), (error) => {});
+				});
+				response.status(200);
+				response.send();
+			}
+			else
+			{
+				response.status(404);
+				response.send();
+			}
 		}
 	});
 });
 
 app.get('/autosync/:id', (request, response) => {
+	const workDirPath = path.join(APP_DATA_PREFIX, '/', request.params.id);
 	response.setHeader('Content-Type', 'application/json');
-	const pidPath = path.join(APP_DATA_PREFIX, '/', request.params.id, '/pid');
-	const syncPath = path.join(APP_DATA_PREFIX, '/', request.params.id, '/sync');
-	const scorePath = path.join(APP_DATA_PREFIX, '/', request.params.id, '/score');
-	const audioPath = path.join(APP_DATA_PREFIX, '/', request.params.id, '/audio');
 	response.header("Cache-Control", "no-cache, no-store, must-revalidate");
 	response.header("Pragma", "no-cache");
 	response.header("Expires", 0);
-	fs.exists(audioPath, (exists) => {
-		if (exists)
+	fs.readdir(workDirPath, (error, files) => {
+		if (error)
 		{
-			fs.exists(scorePath, (exists) => {
-				if (exists)
-				{
-					fs.exists(syncPath, (exists) => {
-						if (exists)
-						{
-							fs.readFile(pidPath, (error, data) => {
-								if (error)
-								{
-									console.log(error);
-									response.status(200);
-									response.send({ status: AUTO_SYNC_STATUS.STILL_SYNCING});
-									return;
-								}
-								if (data == "0")
-								{
-									response.status(200);
-									response.send(JSON.stringify({ status: AUTO_SYNC_STATUS.SYNC_COMPLETE}));
-								}
-								else if (data == "1")
-								{
-									response.status(200);
-									response.send(JSON.stringify({ status: AUTO_SYNC_STATUS.SYNC_FAILED}));
-								}
-								else
-								{
-									response.status(200);
-									response.send(JSON.stringify({ status: AUTO_SYNC_STATUS.STILL_SYNCING}));
-								}
-							});
-						}
-						else
-						{
-							response.status(200);
-							response.send(JSON.stringify({ status: AUTO_SYNC_STATUS.READY_TO_SYNC}));
-						}
-					});
-				}
-				else
-				{
-					response.status(200);
-					response.send(JSON.stringify({ status: AUTO_SYNC_STATUS.NO_SCORE}));
-				}
-			});
+			response.status(404);
+			response.send();
 		}
 		else
 		{
-			response.status(200);
-			response.send(JSON.stringify({ status: AUTO_SYNC_STATUS.NO_AUDIO}));
+			const audioExists = files.reduce((acc, elem) => (acc || elem.startsWith("audio")), false);
+			const scoreExists = files.reduce((acc, elem) => (acc || elem.startsWith("score")), false);
+			const syncExists = files.reduce((acc, elem) => (acc || elem.startsWith("sync")), false);
+			const pidPath = path.join(APP_DATA_PREFIX, '/', request.params.id, '/pid');
+			let status = undefined;
+			if (syncExists)
+			{
+				fs.readFile(pidPath, (err, data) => {
+					if (error)
+					{
+						console.log(error);
+						status = AUTO_SYNC_STATUS.STILL_SYNCING;
+					}
+					else if (data == "0")
+					{
+						status = AUTO_SYNC_STATUS.SYNC_COMPLETE;
+					}
+					else if (data == "1")
+					{
+						status = AUTO_SYNC_STATUS.SYNC_FAILED;
+					}
+					else
+					{
+						status = AUTO_SYNC_STATUS.STILL_SYNCING;
+					}
+					response.status(200);
+					response.send({ status: status });
+				});
+			}
+			else
+			{
+				if (scoreExists && !syncExists)
+				{
+					status = AUTO_SYNC_STATUS.READY_TO_SYNC;
+				}
+				else if (audioExists && !scoreExists)
+				{
+					status = AUTO_SYNC_STATUS.NO_SCORE;
+				}
+				else if (!audioExists)
+				{
+					status = AUTO_SYNC_STATUS.NO_AUDIO;
+				}
+				response.status(200);
+				response.send({ status: status});
+			}
 		}
 	});
 });
-
 
 app.delete('/autosync/:id', (request, response) => {
 	const requestDir = path.join(APP_DATA_PREFIX, '/', request.params.id);
