@@ -3,3 +3,5 @@ libfmp
 music21
 pydub
 sortedcontainers
+soundfile
+midi2audio
