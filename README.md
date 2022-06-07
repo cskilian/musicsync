@@ -16,7 +16,8 @@ Prerequisites:
 - npm
 - python 3.7+
 - PyPI (pip)
-- FluidSynth (and corresponding soundfiles)
+- FluidSynth (and corresponding soundfonts)
+- libsndfile
 
 You need all of the above installed on your server and add it to your $PATH
 
