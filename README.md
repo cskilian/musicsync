@@ -2,26 +2,23 @@
 This application allows a musician to sync a MusicXML score and an audio file.
 
 ## Installing and Running the Application
+Recommendation: use the provided Dockerfile to build and run a container:
+
+### Using Docker
+```
+cd ./src
+docker build -t musicsync .
+docker run -dp 3000:3000 musicsync
+```
+### Manual set-up
 Prerequisites:
 - node.js
 - npm
 - python 3.7+
 - PyPI (pip)
-- ffmpeg (with MIDI support!)
+- FluidSynth (and corresponding soundfiles)
 
-You need all of the above installed and add it to your $PATH
-
-Check that ffmpeg has MIDI support:
-
-On a UNIX system running:
-```
-ffmpeg -formats | grep MIDI
-
-```
-should yield the following line:
-```
- D  sds             MIDI Sample Dump Standard
-```
+You need all of the above installed on your server and add it to your $PATH
 
 Run the following in the app directory to install dependencies:
 ```
@@ -55,28 +52,3 @@ Click on "ManualSync" after the audio file and sheetmusic have loaded. The music
 ### Playback
 When "ManualSync" is turned off, click on any bar with a corresponding timepoint and then click "Play". The audio should play back from the time corresponding to the measure.
 
-## Troubleshooting
-
-### Alternative installation for the Auto Synchronisation feature
-You can install python and the dependenices into an Anaconda environment
-1. Install conda and add it to your $PATH
-2. Create and enter conda environment:
-```
-conda create --name MusicSync python=3.9
-source activate MusicSync 
-```
-3. Install the dependencies:
-```
-conda config --add channels conda-forge
-conda config --set channel_priority strict
-conda install librosa music21 pydub sortedcontainers
-pip install libfmp
-```
-4. Change your Node environment variable in config.js so that PYTHON: 'python'
-5. Source your conda environment then run the server:
-```
-source activate MusicSync
-cd ./src
-node server.js
-```
-IMPORTANT: you must be in your conda environment before running the Node server.
