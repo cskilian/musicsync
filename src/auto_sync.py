@@ -5,9 +5,11 @@ import librosa
 import libfmp.c3
 from pydub import AudioSegment
 from sortedcontainers import SortedDict
+from midi2audio import FluidSynth
 import pdb
 
 TMP_MIDI = "score.mid"
+TMP_WAV = "score.wav"
 SAMPLE_RATE = 22050
 WINDOW_LENGTH = 4410
 HOP_SIZE = 2205
@@ -99,8 +101,9 @@ def pipeline(audio_file_path, score_file_path, sync_file_path):
         source, source_expanded = score_file_to_score_without_metronome_markings(score_file_path)
         # 3. Export unrolled sheet-music to temporary midi file
         source_expanded.write("midi", TMP_MIDI)
+        FluidSynth().midi_to_audio(TMP_MIDI, TMP_WAV)
         # 4. Load and export midi to wave array
-        score_wave, sample_rate = librosa.load(TMP_MIDI, sr = SAMPLE_RATE)
+        score_wave, sample_rate = librosa.load(TMP_WAV, sr = SAMPLE_RATE)
         # 5. Generate chroma graph from wave arrays
         audio_chroma = librosa.feature.chroma_stft(y = audio_wave, sr = SAMPLE_RATE, tuning = 0, norm = 2, hop_length = HOP_SIZE, n_fft = WINDOW_LENGTH)
         score_chroma = librosa.feature.chroma_stft(y = score_wave, sr = SAMPLE_RATE, tuning = 0, norm = 2, hop_length = HOP_SIZE, n_fft = WINDOW_LENGTH)
@@ -111,10 +114,10 @@ def pipeline(audio_file_path, score_file_path, sync_file_path):
         # 8. Write out synchronisation info
         timepoints_to_sync_file(measure_sync, sync_file_path)
     except:
-        sys.exit(1);
+        sys.exit(1)
     finally:
         # 9. Clean-up
-        clean_up([TMP_MIDI])
+        clean_up([TMP_MIDI, TMP_WAV])
 
 if __name__ == "__main__":
     pipeline(sys.argv[1], sys.argv[2], sys.argv[3])

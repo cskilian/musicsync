@@ -565,7 +565,6 @@ async function autoSyncControl()
 			let syncedMeasures = autosyncTimepointsToMeasures(syncData, MusicSync.measures);
 			loadSyncInput(MusicSync.measures, MusicSync.timepointToMeasure, syncedMeasures, updateMeasureTimepointLabelAndTurnOffHighlighting);
 			findNextTimepoint();
-			console.log("WERE HERE");
 		}
 		else
 		{

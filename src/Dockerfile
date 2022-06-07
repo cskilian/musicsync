@@ -1,8 +1,11 @@
-FROM continuumio/miniconda3
-ADD environment.yml /tmp/environment.yml
-RUN conda env create -f /tmp/environment.yml
-# Pull the environment name out of the environment.yml
-RUN echo "source activate $(head -1 /tmp/environment.yml | cut -d' ' -f2)" > ~/.bashrc
-ENV PATH /opt/conda/envs/$(head -1 /tmp/environment.yml | cut -d' ' -f2)/bin:$PATH
+FROM ubuntu
+RUN apt-get update && apt-get upgrade -y
+RUN apt-get install nodejs npm -y
+RUN apt-get install python3-pip -y
+RUN apt-get install ffmpeg gstreamer1.0-plugins-base gstreamer1.0-plugins-ugly libsndfile1 -y
+RUN pip3 install libfmp librosa music21 pydub sortedcontainers soundfile midi2audio -y
+RUN apt-get install fluidsynth fluid-soundfont-gm fluid-soundfont-gs -y
 RUN git clone https://github.com/cskilian/musicsync.git
 RUN cd musicsync/src && npm install
+EXPOSE 3000
+CMD ["node", "server.js"]
