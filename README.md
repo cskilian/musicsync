@@ -2,21 +2,13 @@
 This application allows a musician to sync a MusicXML score and an audio file.
 
 ## Installing and Running the Application
-Recommendation: use the provided Dockerfile to build and run a container:
-
-### Using Docker
-```
-cd ./src
-docker build -t musicsync .
-docker run -dp 3000:3000 musicsync
-```
-### Manual set-up
 Prerequisites:
 - node.js
 - npm
 - python 3.7+
 - PyPI (pip)
 - FluidSynth (and corresponding soundfonts)
+- ffmpeg
 - libsndfile
 
 You need all of the above installed on your server and add it to your $PATH
@@ -25,7 +17,7 @@ Run the following in the app directory to install dependencies:
 ```
 cd ./src
 npm install
-pip3 install -r requirements.txt
+pip3 install -r ../requirements.txt
 ```
 
 Set your Node environment variables in config.js. In particular, PYTHON has to be the name of the Python 3 binary.
@@ -52,4 +44,3 @@ Click on "ManualSync" after the audio file and sheetmusic have loaded. The music
 
 ### Playback
 When "ManualSync" is turned off, click on any bar with a corresponding timepoint and then click "Play". The audio should play back from the time corresponding to the measure.
-
