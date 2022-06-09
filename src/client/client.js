@@ -850,7 +850,7 @@ function createTimepointEditor(measureIndex)
 	const x = Number.parseInt(measureLabelContainer.children[0].getAttributeNode("x").nodeValue) + osmdContainer.getBoundingClientRect().left;
 	const y = Number.parseInt(measureLabelContainer.children[0].getAttributeNode("y").nodeValue) - osmdContainer.scrollTop + osmdContainer.getBoundingClientRect().top;
 	editor.setAttribute("id", TIMEPOINT_EDITOR);
-	editor.setAttribute("style", `position: absolute; top: ${y}px; left: ${x}px; z-index: 10; background-color: grey; border: 2px solid; display: table-cell; vertical-align: middle`);
+	editor.setAttribute("style", `position: absolute; top: ${y}px; left: ${x}px; z-index: 10; display: table-cell; vertical-align: middle`);
 	for (i in MusicSync.measures[measureIndex].timepoint)
 	{
 		const absolute_seconds = MusicSync.measures[measureIndex].timepoint[i];

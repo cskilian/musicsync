@@ -85,3 +85,10 @@ body {
   border-width: 2px;
   background: linear-gradient(white, #878787);
 }
+
+#timepoint-editor {
+  border-color: #8b8b8b black black #8b8b8b;
+  border-style: solid;
+  border-width: 2px;
+  background: linear-gradient(white, #878787);
+}
