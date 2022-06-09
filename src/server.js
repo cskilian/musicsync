@@ -89,7 +89,6 @@ app.post('/autosync/:id/sync', (request, response) => {
 	let audioPaths = undefined;
 	let scorePaths = undefined;
 	fs.readdir(workDirPath, (error, files) => {
-		console.log("FILES: " + files)
 		if (error)
 		{
 			response.status(404);
