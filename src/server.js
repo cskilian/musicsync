@@ -190,7 +190,7 @@ app.get('/autosync/:id', (request, response) => {
 app.delete('/autosync/:id', (request, response) => {
 	const requestDir = path.join(APP_DATA_PREFIX, '/', request.params.id);
 	fs.exists(requestDir, (exists) => {
-		fs.rmdir(requestDir, { recursive: true, force: true}, (error) => {
+		fs.rm(requestDir, { recursive: true, force: true}, (error) => {
 		});
 	});
 });
