@@ -19,20 +19,27 @@ body {
 .file-frame {
   display: inline-block;
   width: 100%;
-  border: 2px solid;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #c3c3c3 #8b8b8b #8b8b8b #c3c3c3;
   padding: 5px 0px 5px 5px;
   box-sizing: border-box;
   height: calc(2rem - 2px);
 }
 
 .file-button {
-  background: gray;
+  background: linear-gradient(white, #878787);
   padding: 3px;
   position: absolute;
+  border-color: #8b8b8b black black #8b8b8b;
   border-style: solid;
-  border-width: 2px 2px 2px 2px;
+  border-width: 2px;
   top: 0px;
   right: 0px;
+}
+
+.file-button:active {
+  border-color: black; 
 }
 
 #audio-box {
@@ -44,6 +51,8 @@ body {
   margin-top: 20px;
   float: left;
   border-radius: 15px;
+  border-color: #8b8b8b black black #8b8b8b;
+  background: linear-gradient(white, #878787);
 }
 
 #time-line {
@@ -68,4 +77,11 @@ body {
   max-height: 100%;
   overflow: auto;
   position: relative;
+}
+
+#timepoint-selector {
+  border-color: #8b8b8b black black #8b8b8b;
+  border-style: solid;
+  border-width: 2px;
+  background: linear-gradient(white, #878787);
 }

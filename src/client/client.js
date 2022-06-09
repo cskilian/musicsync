@@ -601,7 +601,7 @@ function updateLabel(labelId, fileName)
 function updateSeeker()
 {
 	const seeker = document.getElementById(TIMELINE_SEEKER);
-	seeker.style.setProperty('background', 'black');
+	seeker.style.setProperty("background", "linear-gradient(white, #878787)");
 }
 /*
  * Returns an event handler that gets called by the audio-player to update the UI of the timeline
@@ -693,11 +693,11 @@ function updateManualSyncButton()
 	const button = document.getElementById(MANUAL_SYNC_BUTTON);
 	if (MusicSync.isRecording)
 	{
-		button.style.backgroundColor = "red";
+		button.style.setProperty("background", "red");
 	}
 	else
 	{
-		button.style.backgroundColor = null;
+		button.style.setProperty("background", "linear-gradient(white, #878787)");
 	}
 }
 
@@ -706,11 +706,11 @@ function updateAutoSyncButton()
 	const button = document.getElementById(AUTO_SYNC_BUTTON);
 	if (MusicSync.isSyncing)
 	{
-		button.style.backgroundColor = "orange";
+		button.style.setProperty("background", "orange");
 	}
 	else
 	{
-		button.style.backgroundColor = null;
+		button.style.setProperty("background", "linear-gradient(white, #878787)");
 	}
 }
 
@@ -884,7 +884,7 @@ function createRepetitionSelector(measureIndex)
 	const x = Number.parseInt(measureLabelContainer.children[0].getAttributeNode("x").nodeValue) + osmdContainer.getBoundingClientRect().left;
 	const y = Number.parseInt(measureLabelContainer.children[0].getAttributeNode("y").nodeValue) - osmdContainer.scrollTop + osmdContainer.getBoundingClientRect().top;
 	selector.setAttribute("id", TIMEPOINT_SELECTOR);
-	selector.setAttribute("style", `position: absolute; top: ${y}px; left: ${x}px; z-index: 10; background-color: grey; border: 2px solid;`);
+	selector.setAttribute("style", `position: absolute; top: ${y}px; left: ${x}px; z-index: 10;`);
 	for (i in MusicSync.measures[measureIndex].timepoint)
 	{
 		let timepointHTML = `
