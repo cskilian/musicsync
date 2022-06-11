@@ -631,6 +631,7 @@ function timeUpdate(duration)
  		{
  			const currentMeasure = MusicSync.timepointToMeasure.get(MusicSync.nextTimepoint);
  			setMeasureHighlighting(currentMeasure, true);
+ 			autoScrollPageOnPlayback(currentMeasure);
   			if (MusicSync.previousTimepoint !== undefined)
  			{
  				const previousMeasure = MusicSync.timepointToMeasure.get(MusicSync.previousTimepoint);
@@ -660,6 +661,20 @@ function setMeasureHighlighting(measureIndex, onOff)
  			currentMeasureBox.style.opacity = 0;
  		}
  	}
+}
+
+function autoScrollPageOnPlayback(measureIndex)
+{
+	const osmdContainer = document.getElementById(SHEET_MUSIC_CONTAINER);
+	const measureBoxes = document.getElementsByClassName(`measure-box-${measureIndex}`);
+	const firstMeasureBox = measureBoxes[0];
+	const lastMeasureBox = measureBoxes[measureBoxes.length - 1];
+	const lastMeasureBoxPosition = parseFloat(lastMeasureBox.getAttribute("y")) + parseFloat(lastMeasureBox.getAttribute("height"));
+	const firstMeasureBoxPosition = parseInt(firstMeasureBox.getAttribute("y"));
+	if ((osmdContainer.scrollTop + osmdContainer.clientHeight < lastMeasureBoxPosition + 50) || (firstMeasureBoxPosition < osmdContainer.scrollTop))
+	{
+		osmdContainer.scrollTop = Math.max(0, firstMeasureBoxPosition - 100);
+	}
 }
 
 function turnOffAllMeasureHighlighting()
