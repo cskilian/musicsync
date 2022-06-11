@@ -814,7 +814,7 @@ function updateMeasureTimepointLabel(measureIndex)
 	}
 	const measure = MusicSync.osmd.GraphicSheet.measureList[measureIndex][0];
 	const x = (measure.boundingBox.absolutePosition.x + measure.rules.MeasureNumberLabelXOffset) * UNIT_IN_PIXELS;
-	const measureY = (measure.boundingBox.absolutePosition.y - measure.rules.MeasureNumberLabelOffset - measure.rules.MeasureNumberLabelHeight) * UNIT_IN_PIXELS;
+	const measureY = (measure.boundingBox.absolutePosition.y + measure.boundingBox.borderMarginTop) * UNIT_IN_PIXELS;
 	const measureContainer = document.createElementNS("http://www.w3.org/2000/svg", "g");
 	measureContainer.setAttribute("id", `measure-label-${measureIndex}`);
 	measureContainer.setAttribute("onclick", `measureLabelClick(${measureIndex})`);
