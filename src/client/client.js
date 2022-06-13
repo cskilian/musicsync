@@ -291,6 +291,7 @@ function loadSyncInput(musicSyncMeasures, musicSyncTimepointToMeasure, inputObje
 		{
 			valid = false;
 		}
+		let j = undefined;
 		for (j in inputObject[i].timepoint)
 		{
 			if (isNaN(j) || ((musicSyncMeasures[i].repeat === REPEAT.off || musicSyncMeasures[i].repeat === REPEAT.gate) && 0 < j))
