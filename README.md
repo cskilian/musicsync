@@ -1,5 +1,5 @@
 # MusicSync
-This application allows a musician to sync a MusicXML score and an audio file.
+This application is a combined music player and sheetmusic reader that allows a musician to sync a MusicXML score and an audio file. A musician can synchronize a score manually by tapping on each bar while in manual synchronization mode or it can be done automatically via sending the audio and sheetmusic files to the running server.
 
 ## Installing and Running the Application
 Prerequisites:
